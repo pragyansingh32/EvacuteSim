@@ -65,6 +65,12 @@ Stored configs use the engine key names `speed_distribution` /
 | PUT | `/scenarios/{id}` | Update |
 | DELETE | `/scenarios/{id}` | Delete |
 
+## Plan import
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/import/preview` | Multipart upload of a floor plan (image or ASCII DXF) + form fields `name`, `target_width` (8–120 cells), `real_width_m`, `threshold` (0–255, image only), `invert` (image only). Returns `{draft: {name, width, height, cell_size_m, walls, exits: [], zones: []}, stats, warnings}`. The draft has **no exits/zones** — it is completed in the editor. 422 with a clear message on unsupported types, oversized files (>10 MB), unreadable images, or geometry with no detected walls. |
+
 ## Runs
 
 | Method | Path | Description |

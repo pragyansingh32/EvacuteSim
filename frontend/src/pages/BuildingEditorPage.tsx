@@ -3,7 +3,7 @@
 // of persistence and validation truth.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiRequestError } from '../api/client'
 import GridCanvas from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert } from '../components/ui'
@@ -54,6 +54,7 @@ function key(x: number, y: number): string {
 export default function BuildingEditorPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [buildingId, setBuildingId] = useState<number | null>(id ? Number(id) : null)
   const [state, setState] = useState<EditorState>(emptyState)
   const [tool, setTool] = useState<Tool>('wall')
@@ -66,7 +67,7 @@ export default function BuildingEditorPage() {
   const undoStack = useRef<EditorState[]>([])
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([])
 
-  // Load existing building or start a fresh bordered layout.
+  // Load existing building, an imported plan draft, or a fresh bordered layout.
   useEffect(() => {
     setError(null)
     if (id) {
@@ -89,12 +90,48 @@ export default function BuildingEditorPage() {
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false))
-    } else {
-      setState({ ...emptyState(), walls: borderWalls(24, 16) })
+      return
+    }
+    // Adopt an imported plan draft (router state, with sessionStorage fallback).
+    const routerDraft = (location.state as { importDraft?: Record<string, unknown> } | null)
+      ?.importDraft
+    let storedDraft: Record<string, unknown> | null = null
+    try {
+      const raw = sessionStorage.getItem('evacuatesim-import-draft')
+      if (raw) storedDraft = JSON.parse(raw)
+    } catch {
+      storedDraft = null
+    }
+    const source = routerDraft ?? storedDraft
+    if (source && typeof source.width === 'number' && Array.isArray(source.walls)) {
+      try {
+        sessionStorage.removeItem('evacuatesim-import-draft')
+      } catch {
+        // ignore storage errors
+      }
+      setState({
+        name: String(source.name ?? 'Imported building'),
+        description: 'Imported plan draft — review walls, then add exits and zones.',
+        width: source.width,
+        height: source.height as number,
+        cell_size_m: (source.cell_size_m as number) || 0.5,
+        walls: (source.walls as [number, number][]).map(([x, y]) => [x, y] as Point),
+        exits: [],
+        zones: [],
+      })
       setBuildingId(null)
       setWarnings([])
+      setInfo(
+        'Imported plan draft loaded. Clean up conversion noise, place exits and ' +
+          'starting zones, then save.',
+      )
+      return
     }
-  }, [id])
+    setState({ ...emptyState(), walls: borderWalls(24, 16) })
+    setBuildingId(null)
+    setWarnings([])
+    // Re-run when navigating here with a fresh draft (same route, new state).
+  }, [id, location.state])
 
   useEffect(() => {
     api.listBuildings().then(setBuildings).catch(() => undefined)

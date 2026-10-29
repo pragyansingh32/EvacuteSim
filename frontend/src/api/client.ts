@@ -30,9 +30,15 @@ export class ApiRequestError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // Do not set Content-Type for FormData: the browser must add the multipart
+  // boundary itself.
+  const headers =
+    init?.body instanceof FormData
+      ? undefined
+      : { 'Content-Type': 'application/json', ...(init?.headers as Record<string, string>) }
   const response = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers,
   })
   if (!response.ok) {
     let code = 'http_error'
@@ -88,12 +94,50 @@ export const api = {
   compareRuns: (runIds: number[]) =>
     request<ComparisonResponse>('/compare', { method: 'POST', body: JSON.stringify({ run_ids: runIds }) }),
 
+  // plan import
+  previewImportPlan: (
+    file: File,
+    params: { name: string; target_width: number; real_width_m: number; threshold: number; invert: boolean },
+  ) => {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('name', params.name)
+    form.append('target_width', String(params.target_width))
+    form.append('real_width_m', String(params.real_width_m))
+    form.append('threshold', String(params.threshold))
+    form.append('invert', String(params.invert))
+    return request<ImportPreviewResponse>('/import/preview', { method: 'POST', body: form })
+  },
+
   // experiments
   createExperiment: (body: unknown) =>
     request<ExperimentSummary>('/experiments', { method: 'POST', body: JSON.stringify(body) }),
   getExperiment: (id: number) => request<ExperimentSummary>(`/experiments/${id}`),
   listExperiments: () => request<ExperimentSummary[]>('/experiments'),
   getExperimentResults: (id: number) => request<ExperimentResults>(`/experiments/${id}/results`),
+}
+
+export interface ImportPreviewResponse {
+  draft: {
+    name: string
+    width: number
+    height: number
+    cell_size_m: number
+    walls: [number, number][]
+    exits: []
+    zones: []
+  }
+  stats: {
+    source_type: 'image' | 'dxf'
+    wall_cell_count: number
+    wall_ratio: number
+    grid: [number, number]
+    cell_size_m: number
+    source_pixels?: [number, number]
+    segments_imported?: number
+    entities_seen?: number
+  }
+  warnings: string[]
 }
 
 export function formatRunRow(run: CompareRow): Record<string, string | number | null> {

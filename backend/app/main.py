@@ -16,6 +16,7 @@ from app.api import (
     routes_buildings,
     routes_experiments,
     routes_health,
+    routes_import,
     routes_runs,
     routes_scenarios,
 )
@@ -74,6 +75,7 @@ app.include_router(routes_buildings.router, prefix=API)
 app.include_router(routes_scenarios.router, prefix=API)
 app.include_router(routes_runs.router, prefix=API)
 app.include_router(routes_experiments.router, prefix=API)
+app.include_router(routes_import.router, prefix=API)
 
 
 # Root: serve the built frontend when present, otherwise a small JSON index.

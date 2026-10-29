@@ -53,6 +53,15 @@ A 10-minute walkthrough that exercises every major feature. Start the app
 - Show the run reproducing: **Reproduce with recorded seed** gives identical
   numbers — that is the reproducibility contract.
 
+## 7. Import a real plan (2 min)
+
+- **Import Plan** → *Use the bundled sample plan* → Convert.
+- Show the converted wall grid preview and the honest warnings (walls only;
+  noise must be cleaned; geometry is approximate).
+- **Open draft in the editor** → place exits in the drawn door gaps, paint a
+  zone, save → create a scenario and run it. The playback shows occupants
+  evacuating the imported geometry.
+
 ## Anticipated questions
 
 - *Is 1.0 persons/second realistic for a door?* It is a configurable,

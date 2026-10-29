@@ -16,6 +16,7 @@ evacuate/
 │   │   │   ├── engine.py    Discrete-time simulation loop
 │   │   │   └── metrics.py   Percentile helper
 │   │   ├── algorithms/      pathfinding (BFS fields), strategies, assignment
+│   │   ├── planimport/      Floor-plan import: image + ASCII-DXF → grid draft
 │   │   ├── models/          SQLAlchemy ORM models (SQLite)
 │   │   ├── repositories/    Thin persistence functions per entity
 │   │   ├── db/              Engine/session management
@@ -78,6 +79,23 @@ from one; experiment runs link through `experiment_runs`.
 
 JSON documents are stored with `sort_keys` for stable serialization. SQLite
 runs in WAL mode with foreign keys enforced.
+
+## Plan import pipeline (`app/planimport/`)
+
+Converts an uploaded floor plan into a grid **draft** (walls only):
+
+- **Images** (PNG/JPG/BMP/GIF/TIFF/WebP): decode with Pillow → binarize at full
+  resolution at the user threshold (preserves thin lines) → auto-crop to the
+  content bounding box (removes scanner margins that would become phantom
+  floor rings) → box-filter to the target grid → a cell is wall when ≥ 30% of
+  its pixels are wall-colored.
+- **ASCII DXF**: parse LINE / LWPOLYLINE / CIRCLE entities from the text
+  format → Bresenham-rasterize the segments onto the grid.
+
+The draft is handed to the building editor (router state + sessionStorage
+fallback), where the user cleans noise, places exits and zones, and saves
+through the normal validated building API. The import never creates a
+runnable building by itself — exits and zones are human decisions.
 
 ## Computation limits (settings, all overridable via env)
 

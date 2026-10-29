@@ -43,6 +43,9 @@ export default function HomePage() {
           <Link to="/buildings">
             <button>Create a building</button>
           </Link>
+          <Link to="/import">
+            <button>Import an existing plan</button>
+          </Link>
           <Link to="/library">
             <button className="secondary">Launch a sample scenario</button>
           </Link>

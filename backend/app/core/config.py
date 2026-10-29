@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     # --- experiments ---
     max_experiment_runs: int = 200
 
+    # --- plan import ---
+    max_upload_mb: int = 10
+    import_max_pixels: int = 50_000_000  # Pillow decompression-bomb guard
+    import_max_dxf_segments: int = 200_000
+
 
 settings = Settings()
 

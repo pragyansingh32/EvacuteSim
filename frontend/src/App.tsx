@@ -3,6 +3,7 @@ import BuildingEditorPage from './pages/BuildingEditorPage'
 import ComparePage from './pages/ComparePage'
 import ExperimentsPage from './pages/ExperimentsPage'
 import HomePage from './pages/HomePage'
+import ImportPlanPage from './pages/ImportPlanPage'
 import RunViewPage from './pages/RunViewPage'
 import RunsPage from './pages/RunsPage'
 import ScenarioEditorPage from './pages/ScenarioEditorPage'
@@ -19,6 +20,7 @@ export default function App() {
           Home
         </NavLink>
         <NavLink to="/buildings">Buildings &amp; Editor</NavLink>
+        <NavLink to="/import">Import Plan</NavLink>
         <NavLink to="/scenarios">Scenario Editor</NavLink>
         <NavLink to="/library">Scenario Library</NavLink>
         <NavLink to="/runs">Runs</NavLink>
@@ -34,6 +36,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/buildings" element={<BuildingEditorPage />} />
           <Route path="/buildings/:id" element={<BuildingEditorPage />} />
+          <Route path="/import" element={<ImportPlanPage />} />
           <Route path="/scenarios" element={<ScenarioEditorPage />} />
           <Route path="/scenarios/:id" element={<ScenarioEditorPage />} />
           <Route path="/library" element={<ScenarioLibraryPage />} />

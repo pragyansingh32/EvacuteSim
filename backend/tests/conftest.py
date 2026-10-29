@@ -63,3 +63,13 @@ def open_room() -> BuildingGrid:
         exits=[{"id": "E1", "x": 5, "y": 1, "capacity_pps": 1.0}],
         zones=[{"id": "Z", "name": "West", "cells": [[0, 0], [0, 1], [0, 2], [0, 3]]}],
     )
+
+
+@pytest.fixture(scope="session")
+def client():
+    """Shared FastAPI TestClient (lifespan seeds sample data once per session)."""
+    from app.main import app
+    from fastapi.testclient import TestClient
+
+    with TestClient(app) as c:
+        yield c

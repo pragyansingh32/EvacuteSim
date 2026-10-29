@@ -17,6 +17,9 @@ evidence for every number shown.
 
 - **Building editor** — paint walls/floor, place exits (with modeled door
   capacities), define starting zones; server-side validation with warnings.
+- **Plan import** — upload an existing floor plan (image or ASCII DXF CAD
+  file) and convert its wall geometry into a simulation grid draft, then
+  clean it up, place exits/zones, and evacuate it.
 - **Scenario editor** — populations per zone, walking-speed and reaction-time
   distributions, blocked exits/cells, exit capacity overrides, strategy,
   seed, and run limits.
