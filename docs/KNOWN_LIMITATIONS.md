@@ -33,13 +33,16 @@ docs/SIMULATION_MODEL.md.
 
 9. **Grid-only layouts.** No CAD/PDF/IFC import. Rectilinear 0.5 m cells only;
    curved geometry is an approximation.
-10. **Plan import is an approximation, not recognition.** Raster/DXF import
-    detects wall geometry only: no door semantics (door openings convert only
-    if drawn as gaps), no room labels, no furniture recognition — text and
-    hatching become wall cells the user must erase. Binary DXF, PDF, and
-    block references (INSERT) are not imported. Scale relies on the user's
-    stated plan width; the result must always be reviewed in the editor
-    before simulating.
+10. **Plan import auto-interpretation is heuristic.** Doors, exits, zones,
+    and populations are detected automatically (gap-in-wall-line geometry,
+    flood-fill room segmentation, area × density populations), but heuristics
+    have failure modes: door gaps narrower than one grid cell vanish;
+    corridors narrower than ~3 cells can be misread as chains of doors;
+    text/furniture drawn as solid shapes become wall cells; exit capacities
+    are width × 1.3 p/s/m (an assumption, not a measured flow); populations
+    are area × density (an assumption). Warnings list unreachable rooms; the
+    editor remains the review step. Binary DXF, PDF, and INSERT blocks are
+    not imported. Scale relies on the stated plan width.
 11. **Static scenarios.** Blocked exits/cells cannot change mid-run; no
     scheduled events, no occupant re-spawning.
 11. **Experiments are full-factorial only.** No Latin hypercube/optimization

@@ -172,10 +172,13 @@ class TestImportEndpoint:
         body = resp.json()
         assert body["draft"]["name"] == "Uploaded office"
         assert body["draft"]["width"] == 30
-        assert body["draft"]["exits"] == []  # draft: user adds exits in the editor
+        # The synthetic plan's border has no openings: no auto exits possible,
+        # and the system says so instead of inventing doors.
+        assert body["draft"]["exits"] == []
+        assert any("No opening to the outside" in w for w in body["warnings"])
+        assert any("best-effort interpretation" in w for w in body["warnings"])
         assert len(body["draft"]["walls"]) > 10
         assert body["stats"]["source_type"] == "image"
-        assert any("place exits" in w for w in body["warnings"])
 
     def test_preview_accepts_dxf(self, client):
         resp = client.post(

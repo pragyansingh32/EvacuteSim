@@ -99,6 +99,13 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
             if is_wall:
                 walls.add((x, y))
 
+    semantics = None
+    if params.interpret:
+        from app.planimport.semantics import analyze
+
+        semantics = analyze(walls, grid_w, grid_h, cell_size_m=round(
+            params.real_width_m / params.target_width, 3), occupancy_density=params.occupancy_density)
+
     return finish_grid(
         walls,
         grid_w,
@@ -111,4 +118,5 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
             "threshold": params.threshold,
             "invert": params.invert,
         },
+        semantics=semantics,
     )

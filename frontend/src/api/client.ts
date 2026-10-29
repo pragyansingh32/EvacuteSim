@@ -161,7 +161,23 @@ export interface ImportPreviewResponse {
     source_pixels?: [number, number]
     segments_imported?: number
     entities_seen?: number
+    semantics?: {
+      rooms: number
+      doors: number
+      openings: number
+      exits: number
+      zones: number
+    }
   }
+  suggested_scenario?: {
+    name: string
+    description: string
+    config: {
+      zone_populations: Record<string, number>
+      max_duration_s: number
+      dt_s: number
+    }
+  } | null
   warnings: string[]
 }
 

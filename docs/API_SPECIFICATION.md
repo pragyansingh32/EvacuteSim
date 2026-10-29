@@ -98,7 +98,7 @@ Stored configs use the engine key names `speed_distribution` /
 
 | Method | Path | Description |
 | --- | --- | --- |
-| POST | `/import/preview` | Multipart upload of a floor plan (image or ASCII DXF) + form fields `name`, `target_width` (8–120 cells), `real_width_m`, `threshold` (0–255, image only), `invert` (image only). Returns `{draft: {name, width, height, cell_size_m, walls, exits: [], zones: []}, stats, warnings}`. The draft has **no exits/zones** — it is completed in the editor. 422 with a clear message on unsupported types, oversized files (>10 MB), unreadable images, or geometry with no detected walls. |
+| POST | `/import/preview` | Multipart upload of a floor plan (image or ASCII DXF) + form fields `name`, `target_width` (8–120 cells), `real_width_m`, `threshold` (0–255, image only), `invert` (image only), `interpret` (default true), `occupancy_density` (persons/m², default 0.25). Wall extraction is followed by automatic interpretation: door detection (gaps in wall lines verified by a connectivity test), exit placement (openings to the outside, capacity ≈ width × 1.3 p/s/m), room segmentation into starting zones (flood fill), and suggested populations (area × density). Returns `{draft: {name, width, height, cell_size_m, walls, exits, zones}, stats (incl. semantics counts), suggested_scenario, warnings}`. The suggested scenario is complete and runnable; the editor remains available for cleanup. 422 on unsupported types, oversized files (>10 MB), unreadable images, or geometry with no detected walls. |
 
 ## Runs
 

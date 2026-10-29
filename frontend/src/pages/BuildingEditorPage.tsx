@@ -162,8 +162,8 @@ export default function BuildingEditorPage() {
         height: source.height as number,
         cell_size_m: (source.cell_size_m as number) || 0.5,
         walls: (source.walls as [number, number][]).map(([x, y]) => [x, y] as Point),
-        exits: [],
-        zones: [],
+        exits: (source.exits as ExitSpec[]) ?? [],
+        zones: (source.zones as ZoneSpec[]) ?? [],
       }
       setState(next)
       setBuildingId(null)
@@ -172,9 +172,11 @@ export default function BuildingEditorPage() {
       setDirty(true)
       undoStack.current = []
       redoStack.current = []
+      const autoExits = (source.exits as ExitSpec[] | undefined)?.length ?? 0
+      const autoZones = (source.zones as ZoneSpec[] | undefined)?.length ?? 0
       setInfo(
-        'Imported plan draft loaded. Clean up conversion noise, place exits and ' +
-          'starting zones, then save.',
+        `Imported plan draft loaded with ${autoExits} auto-detected exit(s) and ` +
+          `${autoZones} zone(s). Review, adjust, then save.`,
       )
       return
     }

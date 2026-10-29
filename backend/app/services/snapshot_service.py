@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -67,10 +68,8 @@ def _rows_from_json(model, rows: list[dict]) -> list:  # noqa: ANN001
                 continue
             column = model.__table__.columns[key]
             if isinstance(value, str) and column.type.python_type is datetime:
-                try:
+                with suppress(ValueError):
                     value = datetime.fromisoformat(value)
-                except ValueError:
-                    pass
             filtered[key] = value
         objects.append(model(**filtered))
     return objects

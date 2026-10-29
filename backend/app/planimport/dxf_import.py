@@ -30,7 +30,7 @@ def _parse_pairs(text: str):
     """Yield (group_code:int, value:str) pairs from an ASCII DXF document."""
     lines = text.splitlines()
     i = 0
-    while i < len(lines) - 1:
+    while i < len(lines) - 1:  # noqa: SIM105
         code_line = lines[i].strip()
         value_line = lines[i + 1]
         i += 2
@@ -190,6 +190,13 @@ def import_from_dxf(data: bytes, params: ImportParams, name: str) -> ImportResul
     grid_h = min(grid_h, settings.max_grid_height)
 
     walls = _rasterize(segments, grid_w, grid_h, bounds)
+    semantics = None
+    if params.interpret:
+        from app.planimport.semantics import analyze
+
+        cell_size = round(params.real_width_m / params.target_width, 3)
+        semantics = analyze(walls, grid_w, grid_h, cell_size_m=cell_size, occupancy_density=params.occupancy_density)
+
     return finish_grid(
         walls,
         grid_w,
@@ -201,4 +208,5 @@ def import_from_dxf(data: bytes, params: ImportParams, name: str) -> ImportResul
             "entities_seen": entities_seen,
             "segments_imported": len(segments),
         },
+        semantics=semantics,
     )

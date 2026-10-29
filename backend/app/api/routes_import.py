@@ -32,6 +32,8 @@ async def preview_import(
     real_width_m: float = Form(default=15.0),
     threshold: int = Form(default=128),
     invert: bool = Form(default=False),
+    interpret: bool = Form(default=True),
+    occupancy_density: float = Form(default=0.25),
 ) -> dict:
     """Convert an uploaded plan (image or ASCII DXF) into a grid draft.
 
@@ -60,6 +62,8 @@ async def preview_import(
         real_width_m=real_width_m,
         threshold=threshold,
         invert=invert,
+        interpret=interpret,
+        occupancy_density=occupancy_density,
     )
 
     safe_name = (name or "Imported plan").strip()[:200]
@@ -76,8 +80,14 @@ async def preview_import(
     except ValueError as exc:
         raise ValidationError(str(exc)) from exc
 
+    suggested = None
+    if result.draft.exits and result.draft.zones:
+        from app.planimport.common import suggested_scenario
+
+        suggested = suggested_scenario(result.draft, result.zone_populations)
     return {
         "draft": result.draft.to_editor_state(),
         "stats": result.stats,
+        "suggested_scenario": suggested,
         "warnings": result.warnings,
     }

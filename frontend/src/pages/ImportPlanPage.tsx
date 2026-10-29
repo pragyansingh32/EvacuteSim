@@ -9,6 +9,16 @@ import { api, ApiRequestError, type ImportPreviewResponse } from '../api/client'
 import GridCanvas from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert } from '../components/ui'
 
+interface SuggestedScenario {
+  name: string
+  description: string
+  config: {
+    zone_populations: Record<string, number>
+    max_duration_s: number
+    dt_s: number
+  }
+}
+
 const SAMPLE_PLAN_URL = '/sample-plan.png'
 
 export default function ImportPlanPage() {
@@ -24,6 +34,7 @@ export default function ImportPlanPage() {
   const [result, setResult] = useState<ImportPreviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [runningAll, setRunningAll] = useState(false)
   const [isDxf, setIsDxf] = useState(false)
 
   const draftBuilding = useMemo(() => {
@@ -76,6 +87,41 @@ export default function ImportPlanPage() {
     }
   }
 
+  async function convertAndRun() {
+    if (!result) return
+    setRunningAll(true)
+    setError(null)
+    try {
+      const suggested = (result as ImportPreviewResponse & { suggested_scenario?: SuggestedScenario })
+        .suggested_scenario
+      const building = await api.createBuilding({
+        name: result.draft.name,
+        description: 'Imported from a floor plan with automatic door/exit/zone detection.',
+        width: result.draft.width,
+        height: result.draft.height,
+        cell_size_m: result.draft.cell_size_m,
+        walls: result.draft.walls,
+        exits: result.draft.exits,
+        zones: result.draft.zones,
+      })
+      let runId: number | null = null
+      if (suggested) {
+        const scenario = await api.createScenario({
+          building_id: building.id,
+          name: suggested.name,
+          description: suggested.description,
+          config: suggested.config,
+        })
+        const { run } = await api.createRun({ scenario_id: scenario.id })
+        runId = run.id
+      }
+      navigate(runId ? `/runs/${runId}` : `/buildings/${building.id}`)
+    } catch (e) {
+      setError(e instanceof ApiRequestError ? e.message : String(e))
+      setRunningAll(false)
+    }
+  }
+
   function openInEditor() {
     if (!result) return
     const draft = { ...result.draft, importWarnings: result.warnings }
@@ -106,9 +152,9 @@ export default function ImportPlanPage() {
       <h1>Import Building Plan</h1>
       <p className="page-sub">
         Upload a prepared floor plan — an image (PNG/JPG/BMP/TIFF) or an ASCII DXF
-        CAD file — and EvacuateSim converts the wall geometry into a simulation
-        grid draft. You then review it in the editor, place exits and zones, and
-        run evacuations on it.
+        CAD file — and EvacuateSim converts it into a simulation automatically:
+        walls, doors, exits (with width-based capacities), starting zones with
+        suggested populations, and a ready-to-run scenario.
       </p>
       <DisclaimerBanner />
       <ErrorAlert message={error} />
@@ -234,11 +280,38 @@ export default function ImportPlanPage() {
                       </td>
                     </tr>
                   )}
+                  {result.stats.semantics && (
+                    <>
+                      <tr>
+                        <td>Rooms detected</td>
+                        <td>{result.stats.semantics.rooms}</td>
+                      </tr>
+                      <tr>
+                        <td>Doors / openings</td>
+                        <td>
+                          {result.stats.semantics.doors} / {result.stats.semantics.openings}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Exits placed</td>
+                        <td>{result.stats.semantics.exits}</td>
+                      </tr>
+                      <tr>
+                        <td>Starting zones</td>
+                        <td>{result.stats.semantics.zones}</td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
-              <button style={{ marginTop: 12 }} onClick={openInEditor}>
-                Open draft in the editor (add exits &amp; zones)
-              </button>
+              <div className="toolbar" style={{ marginTop: 12 }}>
+                <button onClick={convertAndRun} disabled={runningAll}>
+                  {runningAll ? 'Creating & simulating…' : 'Convert & run evacuation'}
+                </button>
+                <button className="secondary" onClick={openInEditor}>
+                  Review in editor first
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -259,8 +332,10 @@ export default function ImportPlanPage() {
           {result && (
             <>
               <div className="alert info">
-                The conversion produces <strong>walls only</strong>. Doors, exits, and
-                starting zones are added by you in the editor next.
+                Auto-detected {result.stats.semantics?.exits ?? 0} exit(s),{' '}
+                {result.stats.semantics?.zones ?? 0} starting zone(s) with suggested populations,
+                and {result.stats.semantics?.doors ?? 0} door(s). "Convert &amp; run" builds
+                everything and starts the evacuation; the editor is there if you want to fine-tune.
               </div>
               {result.warnings.length > 0 && (
                 <div className="alert error">

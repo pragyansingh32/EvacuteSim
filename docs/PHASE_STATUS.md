@@ -153,6 +153,34 @@ playback at 8× advanced the run from t=0 to half-evacuated, matching T50.
 
 Tests: **111 backend** (+13), 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 6: automatic plan interpretation
+
+The import pipeline now performs the full semantic interpretation itself:
+
+1. **Wall accuracy** — noise-speck removal (small floating components) plus
+   binarize-before-downsample thin-line preservation (from earlier).
+2. **Door detection** — run-based scans along rows/columns find gaps in wall
+   lines; each candidate is verified by a per-group connectivity flood test
+   (removing the gap must actually separate the plan) and a wall-continuation
+   check (the pierced wall must continue beyond the gap — rejects
+   room-interior slices). Consecutive candidate stacks (narrow corridor
+   cross-sections) are filtered.
+3. **Automatic exits** — openings leading off the plan become exits with
+   width-based capacities (width_m × 1.3 p/s/m).
+4. **Automatic zones + populations** — flood-fill room segmentation
+   (interior regions ≥ 6 cells, ≤ 15 zones); suggested population = area ×
+   occupancy density (user parameter, default 0.25 persons/m²).
+5. **One-click flow** — the import page reports rooms/doors/exits/zones and
+   offers "Convert & run evacuation": creates the building (with detected
+   exits/zones), the suggested scenario (dt rounded DOWN to satisfy the
+   engine's dt bound), and starts the run — verified end-to-end: bundled
+   sample plan → 3 exits, 5 zones, populations 28/26/14/14/2 → run #7
+   completed 82/84 evacuated in 36.1 s (2 occupants in an unreachable margin
+   region, honestly reported with warnings).
+6. Editor draft adoption now includes the auto-detected exits/zones.
+
+Tests: **118 backend** (+7 semantics tests), 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,
