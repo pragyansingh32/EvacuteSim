@@ -58,6 +58,32 @@ npm run build     # type-checks (tsc -b) and bundles
 23–27. Covered end-to-end in the recorded browser session (see PHASE_STATUS): sample scenario loads, run starts from the UI, progress and final results visible, comparison over selected runs, understandable errors.
 28. No hardcoded metrics → structural: the frontend has no metric constants; `GridCanvas.test.tsx` and `client.test.ts` verify rendering/formatting only. The disclaimer test guards honest framing.
 
+## Known-answer accuracy battery
+
+`app/services/validation_service.py` (surfaced live on the **System Accuracy**
+page, `GET /api/v1/validation/battery`) encodes 14 designs with analytically
+derived outcomes and asserts the engine classifies each correctly:
+
+- **Pass designs (5):** adequate rooms/corridors, blocked exit with
+  alternative, slow occupants with sufficient horizon → everyone out.
+- **Failure designs (5):** sealed room (occupants marked unreachable, never
+  lost), every exit blocked (refused with clear error), door throughput below
+  population demand (incomplete with the analytically expected remaining
+  count), horizon shorter than travel time, crowd crush with visible queueing.
+- **Quantitative bounds (4):** door-throughput lower bound
+  (last−first discharge ≥ (n−1)/capacity), travel-time lower bound
+  (evacuation ≥ distance×cell/speed), population monotonicity (10 → 20 → 40
+  occupants strictly increases time), seed reproducibility (identical result
+  documents).
+
+The battery is a **pytest regression gate** (`tests/test_validation_battery.py`):
+any engine change that breaks one of these classifications fails CI. It
+measured **100 % (14/14)** at delivery, stable across repeated runs.
+
+Heavy-load verification executed during delivery: 800-occupant / 100×70-cell
+stress run completes in ~2 s wall time with full mass balance; mass balance
+re-verified across every stored run in the database.
+
 ## Regression discipline
 
 Every engine bug found during development has a named regression test

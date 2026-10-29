@@ -71,6 +71,23 @@ Added upload-and-convert for existing building plans after user request:
 - Tests: 92 backend passing (13 new), lint clean; multipart Content-Type fix
   in the shared API client.
 
+## Post-delivery enhancement 2: modern UI + accuracy battery (same session)
+
+1. **Interface modernization** — full design-system rewrite (Inter typography,
+   slate/indigo palette, gradient sidebar with section groups, soft-depth
+   cards, tone-colored metric cards, styled sliders/inputs, refined tables and
+   badges). Verified by screenshots on Home, Accuracy, and Run views; all
+   existing workflows re-checked in the browser.
+2. **Known-answer accuracy battery** — 14 designs with analytically derived
+   outcomes (5 pass designs, 5 failure modes, 4 physics-bound checks) executed
+   live through the real engine on the new **System Accuracy** page
+   (`GET /api/v1/validation/battery`). Result at delivery: **100 % (14/14)**
+   classification accuracy, stable over repeated runs. Regression-gated in
+   pytest (95 backend tests total).
+3. **Heavy testing** — 800-occupant stress scenario (800/800 evacuated,
+   ~2 s wall time), mass balance re-verified across all stored runs,
+   reproduce-endpoint determinism confirmed, battery stability over 5 runs.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

@@ -109,6 +109,9 @@ export const api = {
     return request<ImportPreviewResponse>('/import/preview', { method: 'POST', body: form })
   },
 
+  // system validation
+  validationBattery: () => request<ValidationReport>('/validation/battery'),
+
   // experiments
   createExperiment: (body: unknown) =>
     request<ExperimentSummary>('/experiments', { method: 'POST', body: JSON.stringify(body) }),
@@ -138,6 +141,26 @@ export interface ImportPreviewResponse {
     entities_seen?: number
   }
   warnings: string[]
+}
+
+export interface ValidationCase {
+  name: string
+  category: 'pass' | 'fail' | 'accuracy'
+  description: string
+  expected: string
+  passed: boolean
+  actual: string
+  evidence: Record<string, unknown>
+}
+
+export interface ValidationReport {
+  engine_version: string
+  ran_cases: number
+  passed: number
+  failed: number
+  accuracy_pct: number
+  cases: ValidationCase[]
+  notes: string[]
 }
 
 export function formatRunRow(run: CompareRow): Record<string, string | number | null> {

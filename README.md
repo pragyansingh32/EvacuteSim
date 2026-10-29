@@ -34,6 +34,10 @@ evidence for every number shown.
   utilization, congestion indicator, side-by-side strategy comparison.
 - **Experiments** — full-factorial parameter sweeps × seeds, all executed as
   real runs, with a results table and CSV export.
+- **System Accuracy page** — a 14-case known-answer battery (designs that must
+  evacuate vs. designs that must fail — sealed rooms, undersized doors,
+  impossible horizons — plus physics-bound checks), run live against the real
+  engine with per-case verdicts.
 - **Reproducibility** — every run stores its building snapshot, exact config,
   engine version, and seed; one click re-runs it.
 
@@ -77,7 +81,7 @@ sample scenarios (SQLite at `backend/data/evacuatesim.db`).
 ## Tests and checks
 
 ```powershell
-cd backend; ..\.venv\Scripts\python -m pytest tests/     # 79 tests
+cd backend; ..\.venv\Scripts\python -m pytest tests/     # 95 tests
 cd backend; ..\.venv\Scripts\ruff check app tests
 cd frontend; npm test                                     # vitest
 cd frontend; npm run build                                # tsc + bundle

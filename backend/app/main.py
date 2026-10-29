@@ -19,6 +19,7 @@ from app.api import (
     routes_import,
     routes_runs,
     routes_scenarios,
+    routes_validation,
 )
 from app.core.config import settings
 from app.core.errors import (
@@ -76,6 +77,7 @@ app.include_router(routes_scenarios.router, prefix=API)
 app.include_router(routes_runs.router, prefix=API)
 app.include_router(routes_experiments.router, prefix=API)
 app.include_router(routes_import.router, prefix=API)
+app.include_router(routes_validation.router, prefix=API)
 
 
 # Root: serve the built frontend when present, otherwise a small JSON index.

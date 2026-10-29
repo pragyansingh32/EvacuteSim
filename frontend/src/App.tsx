@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
+import AccuracyPage from './pages/AccuracyPage'
 import BuildingEditorPage from './pages/BuildingEditorPage'
 import ComparePage from './pages/ComparePage'
 import ExperimentsPage from './pages/ExperimentsPage'
@@ -14,8 +15,12 @@ export default function App() {
     <div className="app-shell">
       <nav className="sidebar">
         <div className="brand">
-          Evacuate<span>Sim</span>
+          <span className="mark">⏱</span>
+          <span>
+            Evacuate<span className="word">Sim</span>
+          </span>
         </div>
+        <div className="section-label">Workspace</div>
         <NavLink to="/" end>
           Home
         </NavLink>
@@ -23,9 +28,11 @@ export default function App() {
         <NavLink to="/import">Import Plan</NavLink>
         <NavLink to="/scenarios">Scenario Editor</NavLink>
         <NavLink to="/library">Scenario Library</NavLink>
+        <div className="section-label">Analysis</div>
         <NavLink to="/runs">Runs</NavLink>
         <NavLink to="/compare">Compare</NavLink>
         <NavLink to="/experiments">Experiments</NavLink>
+        <NavLink to="/accuracy">System Accuracy</NavLink>
         <div className="footnote">
           Educational/research simulation. Outcomes depend on model assumptions and are not
           certified safety predictions.
@@ -44,6 +51,7 @@ export default function App() {
           <Route path="/runs/:id" element={<RunViewPage />} />
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
+          <Route path="/accuracy" element={<AccuracyPage />} />
         </Routes>
       </main>
     </div>

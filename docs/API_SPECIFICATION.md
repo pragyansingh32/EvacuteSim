@@ -65,6 +65,12 @@ Stored configs use the engine key names `speed_distribution` /
 | PUT | `/scenarios/{id}` | Update |
 | DELETE | `/scenarios/{id}` | Delete |
 
+## System validation
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/validation/battery` | Runs the 14-case known-answer battery live (≈0.2 s) and returns `{engine_version, ran_cases, passed, failed, accuracy_pct, cases[], notes}`. Each case carries `category` (pass/fail/accuracy), the analytically derived `expected` outcome, and the system's `actual` report. Regression-gated in pytest (`tests/test_validation_battery.py`). |
+
 ## Plan import
 
 | Method | Path | Description |

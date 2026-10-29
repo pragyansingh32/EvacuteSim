@@ -21,13 +21,15 @@ export function MetricCard({
   label,
   value,
   hint,
+  tone,
 }: {
   label: string
   value: ReactNode
   hint?: string
+  tone?: 'accent' | 'ok' | 'warn' | 'danger'
 }) {
   return (
-    <div className="card metric-card">
+    <div className={`card metric-card${tone && tone !== 'accent' ? ` tone-${tone}` : ''}`}>
       <div className="label">{label}</div>
       <div className="value">{value ?? '—'}</div>
       {hint && <div className="hint">{hint}</div>}

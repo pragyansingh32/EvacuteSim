@@ -72,6 +72,18 @@ step-resolution data — coarse by design, deterministic, and monotone.
    (distance × cell size / speed) + capacity effects; a result outside
    plausible bounds indicates a misconfiguration, not a finding.
 
+## System-level accuracy (known-answer battery)
+
+Before interpreting experiments, the engine itself is validated against
+**known-answer cases** whose outcomes follow analytically from geometry and
+capacity (adequate designs evacuate; sealed rooms are reported unreachable;
+undersized doors leave the analytically expected number of people inside;
+travel-time and throughput lower bounds are never violated; time strictly
+increases with population). The battery lives in
+`app/services/validation_service.py`, is displayed live on the System Accuracy
+page, and is regression-gated in pytest. This validates the *tool's internal
+consistency*, not real-world accuracy — the limits below still apply.
+
 ## Limits on generalizing results
 
 - All results describe **the model**, not any real building or population.

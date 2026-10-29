@@ -153,6 +153,13 @@ export default function RunViewPage() {
           <MetricCard
             label="Evacuated"
             value={`${m.evacuated_count}/${m.total_occupants}`}
+            tone={
+              m.remaining_count === 0 && m.unreachable_count === 0
+                ? 'ok'
+                : m.evacuated_count === 0
+                  ? 'danger'
+                  : 'warn'
+            }
             hint={
               m.unreachable_count
                 ? `${m.unreachable_count} could not reach any exit`
