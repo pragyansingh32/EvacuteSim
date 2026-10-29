@@ -109,6 +109,28 @@ Added upload-and-convert for existing building plans after user request:
 
 Tests: **98 backend** (+3 PUT regressions), 4 frontend, lint and tsc clean.
 
+## Post-delivery enhancement 4: cinematic simulation playback
+
+The run animation was rebuilt from jumping cell-dots into a proper player:
+
+- **Smooth motion** — occupants glide between the engine's recorded frames via
+  CSS-transform interpolation timed to the real frame interval at the chosen
+  speed; occupants that discharge fade out at their last position (ghosts).
+- **Cinematic rendering** — walls merge into smooth rounded architecture
+  (SVG goo filter), occupant dots glow (drop-shadow filter) with the updated
+  status palette, exits carry a soft pulsing halo, and the congestion overlay
+  is blur-softened.
+- **Data-driven door pulses** — each exit emits an expanding ring at the exact
+  recorded discharge times (from `exit_stats`), capped to avoid noise.
+- **Transport bar** — round play/pause, step buttons, large time readout
+  (`t / total`), segmented speed control (1×–16×), live Inside/Out counters
+  computed from the current frame, and the congestion toggle.
+
+The animation still shows exactly the recorded frame positions (interpolated
+between two recorded states — nothing invented); verified in-browser: 4 s of
+playback at 8× advanced the run from t=0 to half-evacuated, matching T50.
+98 backend + 4 frontend tests, lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

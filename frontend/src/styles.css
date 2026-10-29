@@ -700,3 +700,109 @@ body:has([data-theme='dark']) {
     linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px) 0 0 / 22px 100%,
     var(--surface);
 }
+
+/* ============================================================
+   Simulation player (run view playback)
+   ============================================================ */
+
+.player-card { padding-bottom: 24px; }
+
+.player-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.play-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.time-readout {
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin-right: 4px;
+}
+.time-readout b { font-size: 24px; font-weight: 750; letter-spacing: -0.02em; }
+.time-readout span { font-size: 13px; color: var(--text-dim); }
+
+.seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg button {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-dim);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.seg button:hover { background: var(--accent-soft); color: var(--accent); transform: none; }
+.seg button.active {
+  background: var(--grad-accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.live-counters { display: flex; gap: 8px; }
+.live-counters span {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.live-counters .lc-in { background: var(--accent-soft); color: var(--accent); }
+.live-counters .lc-out { background: var(--ok-soft); color: var(--ok); }
+
+/* ---- animation layers ---- */
+
+.occ-ghost {
+  animation-name: occFade;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes occFade {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+
+.exit-halo {
+  animation: haloPulse 2.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes haloPulse {
+  0%, 100% { opacity: 0.16; transform: scale(1); }
+  50% { opacity: 0.42; transform: scale(1.22); }
+}
+
+.exit-pulse-ring {
+  animation: pulseRing 0.68s ease-out forwards;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes pulseRing {
+  from { opacity: 0.95; transform: scale(0.35); }
+  to { opacity: 0; transform: scale(2.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .occ-ghost, .exit-halo, .exit-pulse-ring { animation: none; }
+  .occ { transition: none !important; }
+}

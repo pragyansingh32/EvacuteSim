@@ -17,7 +17,7 @@ import {
   YAxis,
 } from 'recharts'
 import { api } from '../api/client'
-import GridCanvas, { STATUS_NAMES } from '../components/GridCanvas'
+import GridCanvas, { STATUS_COLORS, STATUS_NAMES, type ExitPulse } from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert, MetricCard, StatusBadge, fmt, strategyLabel } from '../components/ui'
 import { useTheme } from '../theme'
 import type { BuildingDetail, RunDetail } from '../types'
@@ -33,7 +33,9 @@ export default function RunViewPage() {
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(4) // frames per second multiplier
   const [showCongestion, setShowCongestion] = useState(false)
+  const [pulses, setPulses] = useState<ExitPulse[]>([])
   const timerRef = useRef<number | null>(null)
+  const lastTRef = useRef(0)
 
   // Initial + polling load.
   const load = useCallback(async () => {
@@ -87,6 +89,44 @@ export default function RunViewPage() {
   const frames = run?.frames ?? []
   const lastFrameIdx = Math.max(0, frames.length - 1)
 
+  // Smooth glide duration: match the real frame interval at the chosen speed.
+  const transitionMs = playing
+    ? Math.max(
+        45,
+        Math.min(
+          450,
+          (((frames[Math.min(frameIdx + 1, lastFrameIdx)]?.t ?? frame?.t ?? 0) -
+            (frames[frameIdx]?.t ?? 0)) *
+            1000) /
+            Math.max(1, speed),
+        ),
+      )
+    : 130
+
+  // Exit discharge pulses: when a frame shows more discharges than the
+  // previous one, pulse the doors that discharged in that interval.
+  useEffect(() => {
+    if (!run?.metrics || !frame) return
+    const prevT = lastTRef.current
+    lastTRef.current = frame.t
+    if (frame.t <= prevT + 1e-9) {
+      setPulses([])
+      return
+    }
+    const events = (run.metrics.exit_stats ?? []).flatMap((e) =>
+      e.discharge_times
+        .filter((t) => prevT < t && t <= frame.t + 1e-9)
+        .map(() => ({ x: e.x, y: e.y, id: e.id })),
+    )
+    if (events.length === 0 || events.length > 8) {
+      setPulses([])
+      return
+    }
+    setPulses(events.map((ev, i) => ({ key: `${ev.id}-${frame.t}-${i}`, x: ev.x, y: ev.y })))
+    const timer = window.setTimeout(() => setPulses([]), 750)
+    return () => window.clearTimeout(timer)
+  }, [frameIdx, run, frame])
+
   const curveData = useMemo(
     () =>
       (run?.timeline ?? []).map(([t, evacuated, inside, atExit]) => ({
@@ -97,6 +137,12 @@ export default function RunViewPage() {
       })),
     [run],
   )
+
+  const liveCounts = useMemo(() => {
+    const inside = frame?.occupants.length ?? 0
+    const total = run?.metrics?.total_occupants ?? 0
+    return { inside, out: Math.max(0, total - inside) }
+  }, [frame, run])
 
   const exitData = useMemo(
     () =>
@@ -185,52 +231,54 @@ export default function RunViewPage() {
       )}
 
       {run.status === 'completed' && frames.length > 0 && (
-        <div className="card">
-          <h3>Playback of recorded simulation frames</h3>
-          <div className="toolbar">
-            <button onClick={() => setPlaying((p) => !p)}>{playing ? 'Pause' : 'Play'}</button>
+        <div className="card player-card">
+          <div className="player-bar">
+            <button className="play-btn" onClick={() => setPlaying((p) => !p)} title={playing ? 'Pause' : 'Play'}>
+              {playing ? '❚❚' : '▶'}
+            </button>
             <button
-              className="secondary"
+              className="small secondary"
               onClick={() => {
                 setPlaying(false)
                 setFrameIdx((i) => Math.max(0, i - 1))
               }}
+              title="Step back one frame"
             >
-              ◀ Step
+              ◀
             </button>
             <button
-              className="secondary"
+              className="small secondary"
               onClick={() => {
                 setPlaying(false)
                 setFrameIdx((i) => Math.min(lastFrameIdx, i + 1))
               }}
+              title="Step forward one frame"
             >
-              Step ▶
+              ▶
             </button>
-            <span className="muted">
-              t = {fmt(frame?.t)} s · frame {frameIdx + 1}/{frames.length} ·{' '}
-              {frame ? frame.occupants.length : 0} occupants inside
-            </span>
+            <div className="time-readout">
+              <b>{fmt(frame?.t)}</b>
+              <span> / {fmt(m?.sim_time_s)} s</span>
+            </div>
+            <div className="seg" role="group" aria-label="Playback speed">
+              {[1, 2, 4, 8, 16].map((s) => (
+                <button key={s} className={speed === s ? 'active' : ''} onClick={() => setSpeed(s)}>
+                  {s}×
+                </button>
+              ))}
+            </div>
+            <div className="live-counters">
+              <span className="lc-in">Inside {liveCounts.inside}</span>
+              <span className="lc-out">Out {liveCounts.out}</span>
+            </div>
             <div className="spacer" />
-            <label className="muted" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              Speed
-              <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} style={{ width: 90 }}>
-                <option value={1}>1×</option>
-                <option value={2}>2×</option>
-                <option value={4}>4×</option>
-                <option value={8}>8×</option>
-                <option value={16}>16×</option>
-              </select>
-            </label>
-            <label className="muted" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={showCongestion}
-                onChange={(e) => setShowCongestion(e.target.checked)}
-                style={{ width: 'auto' }}
-              />
-              Congestion heat
-            </label>
+            <button
+              className={`small ${showCongestion ? '' : 'secondary'}`}
+              onClick={() => setShowCongestion((v) => !v)}
+              title="Overlay blocked-move heatmap"
+            >
+              Congestion
+            </button>
           </div>
           <input
             type="range"
@@ -241,35 +289,34 @@ export default function RunViewPage() {
               setPlaying(false)
               setFrameIdx(Number(e.target.value))
             }}
-            style={{ width: '100%', marginBottom: 10 }}
+            style={{ width: '100%', margin: '10px 0 14px' }}
             aria-label="Frame position"
           />
           <div className="map-wrap" style={{ display: 'flex', justifyContent: 'center' }}>
             <GridCanvas
               building={building}
-              blockedExits={run.config.blocked_exit_ids as string[] | undefined ?? []}
+              cinematic
+              blockedExits={(run.config.blocked_exit_ids as string[] | undefined) ?? []}
               blockedCells={(run.config.blocked_cells as [number, number][] | undefined) ?? []}
               congestion={showCongestion ? (m?.congestion ?? {}) : {}}
               frame={frame}
+              previousFrame={frameIdx > 0 ? frames[frameIdx - 1] : null}
+              transitionMs={transitionMs}
+              pulses={pulses}
               cellPx={Math.max(12, Math.min(26, Math.floor(900 / building.width)))}
             />
           </div>
           <div className="legend">
             {STATUS_NAMES.map((name, i) => (
               <span key={name}>
-                <span
-                  className="swatch"
-                  style={{
-                    background: ['#94a3b8', '#1f6feb', '#b45309', '#15803d', '#7c3aed'][i],
-                  }}
-                />
+                <span className="swatch" style={{ background: STATUS_COLORS[i] }} />
                 {name}
               </span>
             ))}
           </div>
           <div className="kbd-note">
-            Frames are recorded by the engine at the configured interval; playback shows exactly
-            those positions.
+            Occupants glide between the engine's recorded frames; door pulses mark each
+            discharge. Playback shows exactly the recorded positions — nothing invented.
           </div>
         </div>
       )}

@@ -3,14 +3,19 @@
 // zones, blocked cells, and (when a frame is given) occupant positions with
 // their recorded status codes. It never invents movement.
 //
-// Editing uses POINTER events captured at the SVG level (works for mouse,
-// touch, and pen), computes the hovered/painted cell from event coordinates,
-// and reports a hover position for the editor's status bar and brush preview.
+// Two render modes:
+//   editor    (default) — crisp per-cell strokes for precise painting.
+//   cinematic — merged rounded walls (goo filter), glowing occupant dots with
+//               CSS-transform interpolation between frames (smooth glide),
+//               fade-out ghosts for occupants that evacuated, exit glow, and
+//               soft congestion blur. Used by the run playback view.
+//
+// Painting uses POINTER events captured at the SVG level (mouse/touch/pen).
 
 import { useMemo, useRef, useState } from 'react'
 import type { BuildingDetail, ExitSpec, Frame, OccupantFrameEntry } from '../types'
 
-const STATUS_COLORS = ['#94a3b8', '#6366f1', '#f59e0b', '#10b981', '#a78bfa']
+export const STATUS_COLORS = ['#94a3b8', '#6366f1', '#f59e0b', '#10b981', '#a78bfa']
 export const STATUS_NAMES = ['Waiting', 'Moving', 'At exit', 'Evacuated', 'Unreachable']
 
 export const ZONE_PALETTE = [
@@ -22,13 +27,26 @@ export const ZONE_PALETTE = [
   'rgba(14, 165, 233, 0.28)',
 ]
 
+export interface ExitPulse {
+  key: string
+  x: number
+  y: number
+}
+
 interface GridCanvasProps {
   building: BuildingDetail
   blockedExits?: string[]
   blockedCells?: [number, number][]
   congestion?: Record<string, number>
   frame?: Frame | null
+  /** Frame immediately before `frame` — used to fade out evacuated occupants. */
+  previousFrame?: Frame | null
+  /** Duration of the glide to the current frame's positions, in ms. */
+  transitionMs?: number
   cellPx?: number
+  cinematic?: boolean
+  /** Data-driven discharge pulses at exit cells. */
+  pulses?: ExitPulse[]
   /** Editor painting: phase 'down' = pointer pressed, 'drag' = moved onto cell. */
   onPaint?: (x: number, y: number, phase: 'down' | 'drag') => void
   onPaintEnd?: () => void
@@ -45,7 +63,11 @@ export default function GridCanvas({
   blockedCells = [],
   congestion = {},
   frame = null,
+  previousFrame = null,
+  transitionMs = 250,
   cellPx = 22,
+  cinematic = false,
+  pulses = [],
   onPaint,
   onPaintEnd,
   onHover,
@@ -82,7 +104,6 @@ export default function GridCanvas({
     const svg = svgRef.current
     if (!svg) return null
     const rect = svg.getBoundingClientRect()
-    // The SVG may be CSS-scaled down (maxWidth 100%); account for that.
     const scaleX = rect.width / width
     const scaleY = rect.height / height
     const x = Math.floor((e.clientX - rect.left) / (cellPx * scaleX))
@@ -99,7 +120,7 @@ export default function GridCanvas({
     try {
       svgRef.current?.setPointerCapture(e.pointerId)
     } catch {
-      // pointer capture unsupported: drag still works via pointerenter
+      // pointer capture unsupported: drag still works via pointer events
     }
     paintingRef.current = true
     lastCellRef.current = `${cell[0]},${cell[1]}`
@@ -124,40 +145,68 @@ export default function GridCanvas({
     }
   }
 
+  // ---- occupants with smooth interpolation --------------------------------
+  const currentOccupants = frame?.occupants ?? []
+  const previousById = useMemo(() => {
+    const map = new Map<number, [number, number, number]>()
+    previousFrame?.occupants.forEach(([id, x, y, status]) => map.set(id, [x, y, status]))
+    return map
+  }, [previousFrame])
+
+  const currentIds = useMemo(() => new Set(currentOccupants.map((o) => o[0])), [currentOccupants])
+  // Occupants that were present last frame but have left the building now:
+  // render at their last known position and fade out via CSS animation.
+  const ghosts = useMemo(() => {
+    if (!previousFrame) return []
+    return [...previousById.entries()]
+      .filter(([id]) => !currentIds.has(id))
+      .map(([id, [x, y]]) => ({ id, x, y }))
+  }, [previousFrame, previousById, currentIds])
+
   // ---- render -------------------------------------------------------------
-  const cells: React.ReactElement[] = []
+  // Walls are kept in their own group so the cinematic goo filter can merge
+  // them into smooth architecture without blurring zones or heat overlays.
+  const wallRects: React.ReactElement[] = []
+  const floorRects: React.ReactElement[] = []
+  const heatRects: React.ReactElement[] = []
   for (let y = 0; y < building.height; y++) {
     for (let x = 0; x < building.width; x++) {
       const key = `${x},${y}`
       const isWall = wallSet.has(key)
       const isBlocked = blockedSet.has(key)
       const zoneIdx = zoneColorByCell.get(key)
-      const fill = isWall
-        ? 'var(--wall)'
-        : isBlocked
-          ? 'var(--blocked)'
-          : zoneIdx !== undefined && showZoneFill
-            ? ZONE_PALETTE[zoneIdx % ZONE_PALETTE.length]
-            : 'var(--floor)'
-      const con = congestion[key]
-      const conOpacity = con && !isWall && !isBlocked ? 0.12 + 0.5 * (con / maxCongestion) : 0
-      cells.push(
+      if (isWall || isBlocked) {
+        wallRects.push(
+          <rect
+            key={key}
+            x={x * cellPx}
+            y={y * cellPx}
+            width={cellPx}
+            height={cellPx}
+            fill={isWall ? 'var(--wall)' : 'var(--blocked)'}
+            data-cell={key}
+          />,
+        )
+        continue
+      }
+      const zoneFill =
+        zoneIdx !== undefined && showZoneFill ? ZONE_PALETTE[zoneIdx % ZONE_PALETTE.length] : null
+      floorRects.push(
         <rect
           key={key}
           x={x * cellPx}
           y={y * cellPx}
           width={cellPx}
           height={cellPx}
-          fill={fill}
-          stroke="var(--grid-line)"
-          strokeWidth={0.5}
+          fill={zoneFill ?? 'var(--floor)'}
+          stroke={cinematic ? 'none' : 'var(--grid-line)'}
+          strokeWidth={cinematic ? 0 : 0.5}
           data-cell={key}
-        >
-          {conOpacity > 0 && <title>{`Blocked-move events here: ${con}`}</title>}
-        </rect>,
+        />,
       )
-      if (conOpacity > 0) {
-        cells.push(
+      const con = congestion[key]
+      if (con) {
+        heatRects.push(
           <rect
             key={`${key}-heat`}
             x={x * cellPx}
@@ -165,7 +214,7 @@ export default function GridCanvas({
             width={cellPx}
             height={cellPx}
             fill="#ef4444"
-            opacity={conOpacity}
+            opacity={0.12 + 0.5 * (con / maxCongestion)}
             pointerEvents="none"
           />,
         )
@@ -173,7 +222,7 @@ export default function GridCanvas({
     }
   }
 
-  // Brush footprint preview under the cursor.
+  // Brush footprint preview under the cursor (editor only).
   const brushCells: React.ReactElement[] = []
   if (interactive && hover && brushSize > 1) {
     for (let dy = 0; dy < brushSize; dy++) {
@@ -197,17 +246,42 @@ export default function GridCanvas({
     }
   }
 
+  const architecture = cinematic ? (
+    <>
+      <g>{floorRects}</g>
+      <g filter="url(#heat-blur)">{heatRects}</g>
+      <g filter="url(#goo-wall)">{wallRects}</g>
+    </>
+  ) : (
+    <>
+      <g>{floorRects}</g>
+      <g>{heatRects}</g>
+      <g>{wallRects}</g>
+    </>
+  )
+
   const exitMarkers = building.exits.map((exit: ExitSpec) => {
     const blocked = blockedExitSet.has(exit.id)
     return (
       <g key={exit.id} pointerEvents="none">
+        {cinematic && !blocked && (
+          <circle
+            cx={exit.x * cellPx + cellPx / 2}
+            cy={exit.y * cellPx + cellPx / 2}
+            r={cellPx * 0.7}
+            fill="var(--exit)"
+            opacity={0.25}
+            className="exit-halo"
+          />
+        )}
         <rect
           x={exit.x * cellPx + 2}
           y={exit.y * cellPx + 2}
           width={cellPx - 4}
           height={cellPx - 4}
-          rx={3.5}
+          rx={Math.min(5, cellPx * 0.22)}
           fill={blocked ? 'var(--blocked)' : 'var(--exit)'}
+          filter={cinematic ? 'url(#soft-shadow)' : undefined}
         />
         <text
           x={exit.x * cellPx + cellPx / 2}
@@ -224,24 +298,65 @@ export default function GridCanvas({
     )
   })
 
-  const occupantDots =
-    frame?.occupants.map((entry: OccupantFrameEntry) => {
-      const [id, x, y, status] = entry
-      return (
+  const dotRadius = Math.max(2.6, cellPx * 0.3)
+
+  function occupantDot(id: number, x: number, y: number, status: number, ghost = false) {
+    return (
+      <g
+        key={ghost ? `ghost-${id}` : `occ-${id}`}
+        className={ghost ? 'occ-ghost' : 'occ'}
+        style={{
+          transform: `translate(${x * cellPx}px, ${y * cellPx}px)`,
+          transition: !ghost && transitionMs > 0 ? `transform ${transitionMs}ms linear` : undefined,
+          ...(ghost ? { animationDuration: `${transitionMs + 150}ms` } : {}),
+        }}
+        pointerEvents="none"
+      >
         <circle
-          key={id}
-          cx={x * cellPx + cellPx / 2}
-          cy={y * cellPx + cellPx / 2}
-          r={Math.max(2.5, cellPx * 0.27)}
+          cx={cellPx / 2}
+          cy={cellPx / 2}
+          r={dotRadius}
           fill={STATUS_COLORS[status] ?? '#334155'}
-          stroke="rgba(255,255,255,0.55)"
-          strokeWidth={0.75}
-          pointerEvents="none"
+          filter={cinematic ? 'url(#dot-glow)' : undefined}
         >
-          <title>{`Occupant ${id} — ${STATUS_NAMES[status] ?? status}`}</title>
+          {!ghost && <title>{`Occupant ${id} — ${STATUS_NAMES[status] ?? status}`}</title>}
         </circle>
-      )
-    }) ?? null
+      </g>
+    )
+  }
+
+  const occupantLayer =
+    frame && frame.occupants.length > 0 ? (
+      <g>
+        {currentOccupants.map((entry: OccupantFrameEntry) => {
+          const [id, x, y, status] = entry
+          return occupantDot(id, x, y, status)
+        })}
+        {ghosts.map((g) => occupantDot(g.id, g.x, g.y, 3, true))}
+      </g>
+    ) : null
+
+  const pulseLayer =
+    pulses.length > 0 ? (
+      <g pointerEvents="none">
+        {pulses.map((p) => (
+          <g
+            key={p.key}
+            style={{
+              transform: `translate(${p.x * cellPx + cellPx / 2}px, ${p.y * cellPx + cellPx / 2}px)`,
+            }}
+          >
+            <circle
+              className="exit-pulse-ring"
+              r={cellPx * 0.5}
+              fill="none"
+              stroke="var(--exit)"
+              strokeWidth={2.5}
+            />
+          </g>
+        ))}
+      </g>
+    ) : null
 
   return (
     <svg
@@ -269,9 +384,29 @@ export default function GridCanvas({
         onHover?.(null)
       }}
     >
-      {cells}
+      {cinematic && (
+        <defs>
+          <filter id="goo-wall" x="-5%" y="-5%" width="110%" height="110%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation={cellPx * 0.16} result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -11"
+            />
+          </filter>
+          <filter id="dot-glow" x="-80%" y="-80%" width="260%" height="260%">
+            <feDropShadow dx="0" dy="0" stdDeviation={dotRadius * 0.55} floodColor={STATUS_COLORS[1]} floodOpacity="0.55" />
+          </filter>
+          <filter id="heat-blur" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation={cellPx * 0.3} />
+          </filter>
+          <filter id="soft-shadow" x="-60%" y="-60%" width="220%" height="220%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.6" floodOpacity="0.35" />
+          </filter>
+        </defs>
+      )}
+      {architecture}
       {brushCells}
-      {/* hover outline drawn above cells, below exits */}
       {interactive && hover && (
         <rect
           x={hover[0] * cellPx}
@@ -286,7 +421,8 @@ export default function GridCanvas({
         />
       )}
       {exitMarkers}
-      {occupantDots}
+      {pulseLayer}
+      {occupantLayer}
     </svg>
   )
 }
