@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { api, ApiRequestError } from '../api/client'
 import { DisclaimerBanner, ErrorAlert, StatusBadge, fmt } from '../components/ui'
+import { useTheme } from '../theme'
 import type { ExperimentResults, ExperimentSummary, ScenarioSummary } from '../types'
 
 const COMMON_SWEEPS: Record<string, Record<string, unknown[]>> = {
@@ -33,6 +34,7 @@ const COMMON_SWEEPS: Record<string, Record<string, unknown[]>> = {
 }
 
 export default function ExperimentsPage() {
+  const { chart } = useTheme()
   const [experiments, setExperiments] = useState<ExperimentSummary[]>([])
   const [scenarios, setScenarios] = useState<ScenarioSummary[]>([])
   const [scenarioId, setScenarioId] = useState<number | null>(null)
@@ -256,9 +258,9 @@ export default function ExperimentsPage() {
               <h3>Outcome spread across sweep settings and seeds</h3>
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={chartRows}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="setting" tick={{ fontSize: 10 }} interval={0} angle={-20} height={60} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                  <XAxis dataKey="setting" tick={{ fontSize: 10, fill: chart.tick }} interval={0} angle={-20} height={60} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
                   <Tooltip />
                   <Legend />
                   <Line type="monotone" dataKey="T90 (s)" stroke="#1f6feb" dot />

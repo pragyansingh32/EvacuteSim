@@ -19,10 +19,12 @@ import {
 import { api } from '../api/client'
 import GridCanvas, { STATUS_NAMES } from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert, MetricCard, StatusBadge, fmt, strategyLabel } from '../components/ui'
+import { useTheme } from '../theme'
 import type { BuildingDetail, RunDetail } from '../types'
 
 export default function RunViewPage() {
   const { id } = useParams()
+  const { chart } = useTheme()
   const runId = Number(id)
   const [run, setRun] = useState<RunDetail | null>(null)
   const [building, setBuilding] = useState<BuildingDetail | null>(null)
@@ -278,9 +280,9 @@ export default function RunViewPage() {
             <h3>Evacuation timeline</h3>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={curveData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="t" tick={{ fontSize: 11 }} label={{ value: 't (s)', position: 'insideBottom', offset: -10 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis dataKey="t" tick={{ fontSize: 11, fill: chart.tick }} label={{ value: 't (s)', position: 'insideBottom', offset: -10 }} />
+                <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="Evacuated" stroke="#15803d" dot={false} />
@@ -293,9 +295,9 @@ export default function RunViewPage() {
             <h3>Exit utilization</h3>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={exitData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
                 <XAxis dataKey="exit" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="Evacuated" fill="#1f6feb" />

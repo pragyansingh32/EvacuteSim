@@ -1,9 +1,11 @@
 // Building editor: paint walls/floor, place exits, define zones, validate,
-// save and load layouts. Grid state lives here; the API is the only source
-// of persistence and validation truth.
+// save and load layouts. Painting uses pointer events (mouse/touch/pen) with
+// an adjustable brush, keyboard shortcuts, undo/redo, zoom, and an explicit
+// unsaved-changes indicator. Grid state lives here; the API is the only
+// source of persistence and validation truth.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { api, ApiRequestError } from '../api/client'
 import GridCanvas from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert } from '../components/ui'
@@ -23,6 +25,14 @@ interface EditorState {
   zones: ZoneSpec[]
 }
 
+const TOOLS: { id: Tool; label: string; icon: string; key: string }[] = [
+  { id: 'wall', label: 'Wall', icon: '▉', key: 'W' },
+  { id: 'floor', label: 'Floor', icon: '·', key: 'F' },
+  { id: 'exit', label: 'Exit', icon: '⇥', key: 'E' },
+  { id: 'zone', label: 'Zone', icon: '◱', key: 'Z' },
+  { id: 'erase', label: 'Erase', icon: '⌫', key: 'X' },
+]
+
 const emptyState = (): EditorState => ({
   name: 'New Building',
   description: '',
@@ -34,8 +44,7 @@ const emptyState = (): EditorState => ({
   zones: [],
 })
 
-// Border walls are auto-generated for new buildings; keep them when
-// re-generating on resize.
+// Border walls are auto-generated for new buildings; regenerated on resize.
 function borderWalls(width: number, height: number): Point[] {
   const walls: Point[] = []
   for (let x = 0; x < width; x++) {
@@ -53,21 +62,53 @@ function key(x: number, y: number): string {
 
 export default function BuildingEditorPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const location = useLocation()
   const [buildingId, setBuildingId] = useState<number | null>(id ? Number(id) : null)
   const [state, setState] = useState<EditorState>(emptyState)
   const [tool, setTool] = useState<Tool>('wall')
+  const [brush, setBrush] = useState(1)
   const [activeZone, setActiveZone] = useState(0)
   const [warnings, setWarnings] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
-  const [painting, setPainting] = useState(false)
   const [loading, setLoading] = useState(!!id)
+  const [hover, setHover] = useState<[number, number] | null>(null)
+  const [zoom, setZoom] = useState<number | null>(null) // null = auto
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
   const undoStack = useRef<EditorState[]>([])
+  const redoStack = useRef<EditorState[]>([])
+  const savedSnapshot = useRef<string>('')
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([])
 
-  // Load existing building, an imported plan draft, or a fresh bordered layout.
+  const markDirty = useCallback(() => setDirty(true), [])
+
+  // ---- history ------------------------------------------------------------
+  const pushUndo = useCallback(() => {
+    undoStack.current.push(structuredClone(state))
+    if (undoStack.current.length > 120) undoStack.current.shift()
+    redoStack.current = []
+  }, [state])
+
+  const undo = useCallback(() => {
+    const prev = undoStack.current.pop()
+    if (prev) {
+      redoStack.current.push(structuredClone(state))
+      setState(prev)
+      setDirty(true)
+    }
+  }, [state])
+
+  const redo = useCallback(() => {
+    const next = redoStack.current.pop()
+    if (next) {
+      undoStack.current.push(structuredClone(state))
+      setState(next)
+      setDirty(true)
+    }
+  }, [state])
+
+  // ---- load ---------------------------------------------------------------
   useEffect(() => {
     setError(null)
     if (id) {
@@ -75,7 +116,7 @@ export default function BuildingEditorPage() {
       api
         .getBuilding(Number(id))
         .then((b: BuildingDetail) => {
-          setState({
+          const next: EditorState = {
             name: b.name,
             description: b.description,
             width: b.width,
@@ -84,9 +125,14 @@ export default function BuildingEditorPage() {
             walls: b.walls.map(([x, y]) => [x, y] as Point),
             exits: b.exits,
             zones: b.zones,
-          })
+          }
+          setState(next)
           setBuildingId(b.id)
           setWarnings(b.warnings)
+          savedSnapshot.current = JSON.stringify(next)
+          setDirty(false)
+          undoStack.current = []
+          redoStack.current = []
         })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false))
@@ -109,107 +155,157 @@ export default function BuildingEditorPage() {
       } catch {
         // ignore storage errors
       }
-      setState({
+      const next: EditorState = {
         name: String(source.name ?? 'Imported building'),
         description: 'Imported plan draft — review walls, then add exits and zones.',
-        width: source.width,
+        width: source.width as number,
         height: source.height as number,
         cell_size_m: (source.cell_size_m as number) || 0.5,
         walls: (source.walls as [number, number][]).map(([x, y]) => [x, y] as Point),
         exits: [],
         zones: [],
-      })
+      }
+      setState(next)
       setBuildingId(null)
       setWarnings([])
+      savedSnapshot.current = JSON.stringify(next)
+      setDirty(true)
+      undoStack.current = []
+      redoStack.current = []
       setInfo(
         'Imported plan draft loaded. Clean up conversion noise, place exits and ' +
           'starting zones, then save.',
       )
       return
     }
-    setState({ ...emptyState(), walls: borderWalls(24, 16) })
+    const fresh = { ...emptyState(), walls: borderWalls(24, 16) }
+    setState(fresh)
     setBuildingId(null)
     setWarnings([])
-    // Re-run when navigating here with a fresh draft (same route, new state).
+    savedSnapshot.current = JSON.stringify(fresh)
+    setDirty(false)
+    undoStack.current = []
+    redoStack.current = []
   }, [id, location.state])
 
   useEffect(() => {
     api.listBuildings().then(setBuildings).catch(() => undefined)
   }, [buildingId])
 
-  const pushUndo = useCallback(() => {
-    undoStack.current.push(structuredClone(state))
-    if (undoStack.current.length > 100) undoStack.current.shift()
-  }, [state])
+  // ---- keyboard shortcuts -------------------------------------------------
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') {
+        return
+      }
+      const k = e.key.toLowerCase()
+      if ((e.ctrlKey || e.metaKey) && k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+      if ((e.ctrlKey || e.metaKey) && k === 'y') {
+        e.preventDefault()
+        redo()
+        return
+      }
+      if (e.ctrlKey || e.metaKey) return
+      const tool = TOOLS.find((t) => t.key.toLowerCase() === k)
+      if (tool) setTool(tool.id)
+      if (k === '[') setBrush((b) => Math.max(1, b - 1))
+      if (k === ']') setBrush((b) => Math.min(4, b + 1))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
-  const undo = () => {
-    const prev = undoStack.current.pop()
-    if (prev) setState(prev)
-  }
-
-  // ---- painting ----------------------------------------------------------
-  function applyTool(x: number, y: number) {
-    setState((prev) => {
-      const walls = new Set(prev.walls.map(([wx, wy]) => key(wx, wy)))
-      const k = key(x, y)
-      if (tool === 'wall') {
-        walls.add(k)
-        removeExitAt(prev, x, y) // exits cannot sit on walls
-      } else if (tool === 'floor' || tool === 'erase') {
-        walls.delete(k)
-        if (tool === 'erase') {
-          return {
-            ...prev,
-            walls: [...walls].map((w) => w.split(',').map(Number) as Point),
-            exits: prev.exits.filter((e) => !(e.x === x && e.y === y)),
-            zones: prev.zones.map((z) => ({ ...z, cells: z.cells.filter(([cx, cy]) => !(cx === x && cy === y)) })),
+  // ---- painting -----------------------------------------------------------
+  const applyTool = useCallback(
+    (x: number, y: number) => {
+      setState((prev) => {
+        const walls = new Set(prev.walls.map(([wx, wy]) => key(wx, wy)))
+        const zoneCells = new Set(
+          (prev.zones[activeZone]?.cells ?? []).map(([wx, wy]) => key(wx, wy)),
+        )
+        const footprint: Point[] = []
+        for (let dy = 0; dy < brush; dy++) {
+          for (let dx = 0; dx < brush; dx++) {
+            const bx = x + dx
+            const by = y + dy
+            if (bx < prev.width && by < prev.height) footprint.push([bx, by])
           }
         }
-      } else if (tool === 'exit') {
-        walls.delete(k)
-        const exits = prev.exits.filter((e) => !(e.x === x && e.y === y))
-        const nextId = `E${prev.exits.length + 1}`
-        exits.push({ id: nextId, x, y, capacity_pps: 1.0 })
-        return { ...prev, walls: [...walls].map((w) => w.split(',').map(Number) as Point), exits }
-      } else if (tool === 'zone') {
-        const zones = prev.zones.map((z, i) => {
-          if (i !== activeZone) return { ...z, cells: z.cells.filter(([cx, cy]) => !(cx === x && cy === y)) }
-          const cells = z.cells.filter(([cx, cy]) => !(cx === x && cy === y))
-          if (walls.has(k)) return { ...z, cells } // no zone on walls
-          cells.push([x, y])
-          return { ...z, cells }
-        })
-        return { ...prev, zones }
-      }
-      return { ...prev, walls: [...walls].map((w) => w.split(',').map(Number) as Point) }
-    })
-  }
+        let next: EditorState = prev
 
-  function removeExitAt(_prev: EditorState, x: number, y: number) {
-    // exits on a freshly painted wall are dropped by the caller via walls set
-    void x
-    void y
-  }
+        if (tool === 'wall') {
+          footprint.forEach(([bx, by]) => walls.add(key(bx, by)))
+          next = {
+            ...prev,
+            exits: prev.exits.filter((e) => !footprint.some(([fx, fy]) => fx === e.x && fy === e.y)),
+            walls: [...walls].map((w) => w.split(',').map(Number) as Point),
+          }
+        } else if (tool === 'floor' || tool === 'erase') {
+          footprint.forEach(([bx, by]) => walls.delete(key(bx, by)))
+          if (tool === 'erase') {
+            next = {
+              ...prev,
+              walls: [...walls].map((w) => w.split(',').map(Number) as Point),
+              exits: prev.exits.filter((e) => !footprint.some(([fx, fy]) => fx === e.x && fy === e.y)),
+              zones: prev.zones.map((z) => ({
+                ...z,
+                cells: z.cells.filter(([cx, cy]) => !footprint.some(([fx, fy]) => fx === cx && fy === cy)),
+              })),
+            }
+          } else {
+            next = { ...prev, walls: [...walls].map((w) => w.split(',').map(Number) as Point) }
+          }
+        } else if (tool === 'exit') {
+          if (footprint.length === 1) {
+            const [bx, by] = footprint[0]
+            const wallsSet = new Set(walls)
+            wallsSet.delete(key(bx, by))
+            const exits = prev.exits.filter((e) => !(e.x === bx && e.y === by))
+            const nextId = `E${prev.exits.length + 1}`
+            exits.push({ id: nextId, x: bx, y: by, capacity_pps: 1.0 })
+            next = {
+              ...prev,
+              walls: [...wallsSet].map((w) => w.split(',').map(Number) as Point),
+              exits,
+            }
+          } else {
+            next = prev
+          }
+        } else if (tool === 'zone') {
+          if (!prev.zones[activeZone]) return prev
+          const zones = prev.zones.map((z, i) => {
+            if (i !== activeZone) return z
+            const cells = new Set(z.cells.map(([cx, cy]) => key(cx, cy)))
+            footprint.forEach(([bx, by]) => {
+              if (!walls.has(key(bx, by))) cells.add(key(bx, by))
+            })
+            return { ...z, cells: [...cells].map((c) => c.split(',').map(Number) as Point) }
+          })
+          next = { ...prev, zones }
+          void zoneCells
+        }
+        if (next !== prev) markDirty()
+        return next
+      })
+    },
+    [tool, brush, activeZone, markDirty],
+  )
 
-  function onCellMouseDown(x: number, y: number) {
-    pushUndo()
-    setPainting(true)
-    applyTool(x, y)
-  }
+  const onPaint = useCallback(
+    (x: number, y: number, phase: 'down' | 'drag') => {
+      if (phase === 'down') pushUndo()
+      applyTool(x, y)
+    },
+    [applyTool, pushUndo],
+  )
 
-  function onCellEnter(x: number, y: number, e: React.MouseEvent) {
-    if (painting && (tool === 'wall' || tool === 'floor' || tool === 'zone' || tool === 'erase')) {
-      if (e.buttons === 1) applyTool(x, y)
-    }
-  }
-
-  useEffect(() => {
-    const up = () => setPainting(false)
-    window.addEventListener('mouseup', up)
-    return () => window.removeEventListener('mouseup', up)
-  }, [])
-
-  // ---- zones management --------------------------------------------------
+  // ---- zones & exits ------------------------------------------------------
   function addZone() {
     pushUndo()
     setState((prev) => ({
@@ -217,13 +313,37 @@ export default function BuildingEditorPage() {
       zones: [...prev.zones, { id: `Z${prev.zones.length + 1}`, name: `Zone ${prev.zones.length + 1}`, cells: [] }],
     }))
     setActiveZone(state.zones.length)
+    setTool('zone')
+    markDirty()
+  }
+
+  function deleteZone(idx: number) {
+    pushUndo()
+    setState((prev) => ({ ...prev, zones: prev.zones.filter((_, i) => i !== idx) }))
+    setActiveZone(0)
+    markDirty()
   }
 
   function renameZone(idx: number, name: string) {
     setState((prev) => ({ ...prev, zones: prev.zones.map((z, i) => (i === idx ? { ...z, name } : z)) }))
+    markDirty()
   }
 
-  // ---- resize ------------------------------------------------------------
+  function setExitCapacity(exitId: string, capacity: number) {
+    setState((prev) => ({
+      ...prev,
+      exits: prev.exits.map((e) => (e.id === exitId ? { ...e, capacity_pps: capacity } : e)),
+    }))
+    markDirty()
+  }
+
+  function deleteExit(exitId: string) {
+    pushUndo()
+    setState((prev) => ({ ...prev, exits: prev.exits.filter((e) => e.id !== exitId) }))
+    markDirty()
+  }
+
+  // ---- resize / zoom ------------------------------------------------------
   function resize(width: number, height: number) {
     pushUndo()
     setState((prev) => ({
@@ -235,12 +355,17 @@ export default function BuildingEditorPage() {
       zones: prev.zones.map((z) => ({ ...z, cells: z.cells.filter(([x, y]) => x < width && y < height) })),
     }))
     setInfo('Grid resized — the border was regenerated; interior walls were cleared.')
+    markDirty()
   }
 
-  // ---- save / validate ---------------------------------------------------
+  const autoCellPx = Math.max(12, Math.min(26, Math.floor(820 / state.width)))
+  const cellPx = zoom ?? autoCellPx
+
+  // ---- save ---------------------------------------------------------------
   async function save() {
     setError(null)
     setInfo(null)
+    setSaving(true)
     const body = {
       name: state.name,
       description: state.description,
@@ -261,40 +386,62 @@ export default function BuildingEditorPage() {
         setBuildingId(saved.id)
         setWarnings(saved.warnings)
         setInfo(`Building saved with id ${saved.id}.`)
-        navigate(`/buildings/${saved.id}`, { replace: true })
+        window.history.replaceState(null, '', `/buildings/${saved.id}`)
       }
+      savedSnapshot.current = JSON.stringify(state)
+      setDirty(false)
       api.listBuildings().then(setBuildings).catch(() => undefined)
     } catch (e) {
       setError(e instanceof ApiRequestError ? e.message : String(e))
+    } finally {
+      setSaving(false)
     }
   }
 
-  const buildingForCanvas = {
-    id: buildingId ?? 0,
-    name: state.name,
-    description: state.description,
-    width: state.width,
-    height: state.height,
-    cell_size_m: state.cell_size_m,
-    is_sample: false,
-    created_at: '',
-    updated_at: '',
-    walls: state.walls,
-    exits: state.exits,
-    zones: state.zones,
-    warnings,
-  }
+  const buildingForCanvas = useMemo(
+    () => ({
+      id: buildingId ?? 0,
+      name: state.name,
+      description: state.description,
+      width: state.width,
+      height: state.height,
+      cell_size_m: state.cell_size_m,
+      is_sample: false,
+      created_at: '',
+      updated_at: '',
+      walls: state.walls,
+      exits: state.exits,
+      zones: state.zones,
+      warnings,
+    }),
+    [buildingId, state, warnings],
+  )
 
   if (loading) return <div className="muted">Loading building…</div>
 
   return (
     <div>
-      <h1>Building Editor</h1>
-      <p className="page-sub">
-        Paint walls and floor, place exits, define starting zones. One cell ={' '}
-        {state.cell_size_m} m ({(state.cell_size_m * state.width).toFixed(1)} m ×{' '}
-        {(state.cell_size_m * state.height).toFixed(1)} m floor).
-      </p>
+      <div className="page-head">
+        <div>
+          <h1>Building Editor</h1>
+          <p className="page-sub">
+            Paint walls and floor, place exits, define starting zones. One cell ={' '}
+            {state.cell_size_m} m — the floor is {(state.cell_size_m * state.width).toFixed(1)} m ×{' '}
+            {(state.cell_size_m * state.height).toFixed(1)} m.
+          </p>
+        </div>
+        <div className="page-actions">
+          <button className="secondary" onClick={undo} disabled={undoStack.current.length === 0} title="Undo (Ctrl+Z)">
+            ↶ Undo
+          </button>
+          <button className="secondary" onClick={redo} disabled={redoStack.current.length === 0} title="Redo (Ctrl+Shift+Z)">
+            ↷ Redo
+          </button>
+          <button onClick={save} disabled={saving}>
+            {saving ? 'Saving…' : buildingId ? (dirty ? 'Save changes •' : 'Saved') : dirty ? 'Create building •' : 'Saved'}
+          </button>
+        </div>
+      </div>
       <DisclaimerBanner />
 
       <ErrorAlert message={error} />
@@ -310,127 +457,202 @@ export default function BuildingEditorPage() {
         </div>
       )}
 
-      <div className="grid-2" style={{ gridTemplateColumns: '2fr 1fr', alignItems: 'start' }}>
-        <div className="map-wrap">
-          <GridCanvas
-            building={buildingForCanvas}
-            interactive
-            cellPx={Math.max(14, Math.min(26, Math.floor(860 / state.width)))}
-            onCellMouseDown={onCellMouseDown}
-            onCellMouseEnter={onCellEnter}
-          />
-          <div className="legend">
-            <span><span className="swatch" style={{ background: 'var(--wall)' }} />Wall</span>
-            <span><span className="swatch" style={{ background: 'var(--floor)' }} />Floor</span>
-            <span><span className="swatch" style={{ background: 'var(--exit)' }} />Exit</span>
-            <span><span className="swatch" style={{ background: '#93c5fd' }} />Zone fill</span>
+      <div className="editor-layout">
+        {/* ---- tool rail ---- */}
+        <div className="tool-rail card">
+          <div className="rail-label">Tools</div>
+          {TOOLS.map((t) => (
+            <button
+              key={t.id}
+              className={`rail-btn${tool === t.id ? ' active' : ''}`}
+              onClick={() => setTool(t.id)}
+              title={`${t.label} (${t.key})`}
+            >
+              <span className="rail-icon">{t.icon}</span>
+              <span className="rail-text">{t.label}</span>
+              <span className="rail-key">{t.key}</span>
+            </button>
+          ))}
+          <div className="rail-label">Brush</div>
+          <div className="brush-row">
+            {[1, 2, 3, 4].map((b) => (
+              <button
+                key={b}
+                className={`brush-btn${brush === b ? ' active' : ''}`}
+                onClick={() => setBrush(b)}
+                title={`${b}×${b} brush`}
+              >
+                {b}×{b}
+              </button>
+            ))}
+          </div>
+          <div className="rail-label">Zoom</div>
+          <div className="brush-row">
+            <button className="brush-btn" onClick={() => setZoom(Math.max(8, (zoom ?? autoCellPx) - 4))} title="Zoom out">
+              −
+            </button>
+            <button className="brush-btn" onClick={() => setZoom(null)} title="Fit to window">
+              Fit
+            </button>
+            <button className="brush-btn" onClick={() => setZoom(Math.min(40, (zoom ?? autoCellPx) + 4))} title="Zoom in">
+              +
+            </button>
           </div>
         </div>
 
-        <div>
-          <div className="card">
-            <h3>Tools</h3>
-            <div className="toolbar">
-              {(['wall', 'floor', 'exit', 'zone', 'erase'] as Tool[]).map((t) => (
-                <button
-                  key={t}
-                  className={tool === t ? 'small' : 'small secondary'}
-                  style={tool === t ? { background: 'var(--accent)', color: '#fff' } : undefined}
-                  onClick={() => setTool(t)}
-                >
-                  {t[0].toUpperCase() + t.slice(1)}
-                </button>
-              ))}
-              <button className="small secondary" onClick={undo}>
-                Undo
-              </button>
-            </div>
-            <div className="kbd-note">
-              Drag to paint. Exit tool places a door (1.0 p/s default); Zone tool paints the
-              selected zone below.
-            </div>
+        {/* ---- map ---- */}
+        <div className="editor-map">
+          <div className="map-wrap">
+            <GridCanvas
+              building={buildingForCanvas}
+              interactive
+              brushSize={tool === 'wall' || tool === 'floor' || tool === 'erase' || tool === 'zone' ? brush : 1}
+              cellPx={cellPx}
+              onPaint={onPaint}
+              onHover={setHover}
+            />
           </div>
+          <div className="status-bar">
+            <span>
+              <strong>{TOOLS.find((t) => t.id === tool)?.label}</strong>
+              {hover ? ` @ (${hover[0]}, ${hover[1]})` : ' — hover the map'}
+            </span>
+            <span>
+              {state.width}×{state.height} cells · {cellPx} px/cell
+            </span>
+            <span>
+              Exits: {state.exits.length} · Zone cells:{' '}
+              {state.zones.reduce((a, z) => a + z.cells.length, 0)} · Walls:{' '}
+              {state.walls.length}
+            </span>
+            <span className={`save-state${dirty ? ' dirty' : ''}`}>
+              {dirty ? '● Unsaved changes' : '✓ Saved'}
+            </span>
+          </div>
+        </div>
 
+        {/* ---- side panel ---- */}
+        <div className="editor-side">
           <div className="card">
-            <h3>Zones (starting areas)</h3>
+            <h3>Zones — occupant starting areas</h3>
+            {state.zones.length === 0 && (
+              <div className="muted" style={{ marginBottom: 8 }}>
+                No zones yet. Add one, then paint it on the map with the Zone tool.
+              </div>
+            )}
             {state.zones.map((z, i) => (
-              <div key={z.id} className="toolbar" style={{ marginBottom: 6 }}>
+              <div key={z.id} className={`zone-row${i === activeZone && tool === 'zone' ? ' active' : ''}`}>
                 <button
                   className="small"
-                  style={i === activeZone ? undefined : { background: '#64748b' }}
                   onClick={() => {
                     setActiveZone(i)
                     setTool('zone')
                   }}
+                  title="Paint this zone"
                 >
-                  {i === activeZone ? 'Painting' : 'Select'}
+                  {i === activeZone && tool === 'zone' ? 'Painting' : 'Paint'}
                 </button>
-                <input
-                  value={z.name}
-                  onChange={(e) => renameZone(i, e.target.value)}
-                  aria-label={`Zone ${z.id} name`}
-                />
-                <span className="muted">{z.cells.length} cells</span>
+                <input value={z.name} onChange={(e) => renameZone(i, e.target.value)} aria-label={`Zone ${z.id} name`} />
+                <span className="muted">{z.cells.length}</span>
+                <button className="small secondary" onClick={() => deleteZone(i)} title="Delete zone">
+                  ✕
+                </button>
               </div>
             ))}
             <button className="small secondary" onClick={addZone}>
-              Add zone
+              + Add zone
             </button>
           </div>
-        </div>
-      </div>
 
-      <div className="card">
-        <h3>Layout settings</h3>
-        <div className="grid-4">
-          <label className="field">
-            <span className="lbl">Name</span>
-            <input value={state.name} onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))} />
-          </label>
-          <label className="field">
-            <span className="lbl">Width (cells)</span>
-            <input
-              type="number"
-              min={4}
-              max={120}
-              value={state.width}
-              onChange={(e) => resize(Number(e.target.value) || state.width, state.height)}
-            />
-          </label>
-          <label className="field">
-            <span className="lbl">Height (cells)</span>
-            <input
-              type="number"
-              min={4}
-              max={120}
-              value={state.height}
-              onChange={(e) => resize(state.width, Number(e.target.value) || state.height)}
-            />
-          </label>
-          <label className="field">
-            <span className="lbl">Cell size (m)</span>
-            <input
-              type="number"
-              step={0.1}
-              min={0.1}
-              max={5}
-              value={state.cell_size_m}
-              onChange={(e) => setState((p) => ({ ...p, cell_size_m: Number(e.target.value) || p.cell_size_m }))}
-            />
-          </label>
-        </div>
-        <label className="field">
-          <span className="lbl">Description</span>
-          <input
-            value={state.description}
-            onChange={(e) => setState((p) => ({ ...p, description: e.target.value }))}
-          />
-        </label>
-        <div className="toolbar">
-          <button onClick={save}>{buildingId ? 'Save changes' : 'Create building'}</button>
-          <span className="muted">
-            Exits: {state.exits.length} · Zone cells: {state.zones.reduce((a, z) => a + z.cells.length, 0)}
-          </span>
+          <div className="card">
+            <h3>Exits ({state.exits.length})</h3>
+            {state.exits.length === 0 && (
+              <div className="muted" style={{ marginBottom: 8 }}>
+                Place exits with the Exit tool (⇥) — click a floor or border cell.
+              </div>
+            )}
+            {state.exits.map((e) => (
+              <div key={e.id} className="zone-row">
+                <span className="exit-chip">{e.id}</span>
+                <span className="muted">
+                  ({e.x}, {e.y})
+                </span>
+                <input
+                  type="number"
+                  step={0.25}
+                  min={0.25}
+                  value={e.capacity_pps}
+                  onChange={(ev) => setExitCapacity(e.id, Number(ev.target.value) || e.capacity_pps)}
+                  aria-label={`Exit ${e.id} capacity`}
+                  style={{ width: 76 }}
+                />
+                <button className="small secondary" onClick={() => deleteExit(e.id)} title="Remove exit">
+                  ✕
+                </button>
+              </div>
+            ))}
+            <div className="kbd-note">Capacity in persons/second through that door.</div>
+          </div>
+
+          <div className="card">
+            <h3>Layout settings</h3>
+            <label className="field">
+              <span className="lbl">Name</span>
+              <input
+                value={state.name}
+                onChange={(e) => {
+                  setState((p) => ({ ...p, name: e.target.value }))
+                  markDirty()
+                }}
+              />
+            </label>
+            <label className="field">
+              <span className="lbl">Description</span>
+              <input
+                value={state.description}
+                onChange={(e) => {
+                  setState((p) => ({ ...p, description: e.target.value }))
+                  markDirty()
+                }}
+              />
+            </label>
+            <div className="grid-3">
+              <label className="field">
+                <span className="lbl">Width</span>
+                <input
+                  type="number"
+                  min={4}
+                  max={120}
+                  value={state.width}
+                  onChange={(e) => resize(Number(e.target.value) || state.width, state.height)}
+                />
+              </label>
+              <label className="field">
+                <span className="lbl">Height</span>
+                <input
+                  type="number"
+                  min={4}
+                  max={120}
+                  value={state.height}
+                  onChange={(e) => resize(state.width, Number(e.target.value) || state.height)}
+                />
+              </label>
+              <label className="field">
+                <span className="lbl">Cell (m)</span>
+                <input
+                  type="number"
+                  step={0.1}
+                  min={0.1}
+                  max={5}
+                  value={state.cell_size_m}
+                  onChange={(e) => {
+                    setState((p) => ({ ...p, cell_size_m: Number(e.target.value) || p.cell_size_m }))
+                    markDirty()
+                  }}
+                />
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

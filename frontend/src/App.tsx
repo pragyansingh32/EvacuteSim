@@ -9,8 +9,10 @@ import RunViewPage from './pages/RunViewPage'
 import RunsPage from './pages/RunsPage'
 import ScenarioEditorPage from './pages/ScenarioEditorPage'
 import ScenarioLibraryPage from './pages/ScenarioLibraryPage'
+import { useTheme } from './theme'
 
 export default function App() {
+  const { isDark, toggle } = useTheme()
   return (
     <div className="app-shell">
       <nav className="sidebar">
@@ -37,6 +39,9 @@ export default function App() {
           Educational/research simulation. Outcomes depend on model assumptions and are not
           certified safety predictions.
         </div>
+        <button className="theme-toggle" onClick={toggle} title="Toggle light/dark theme">
+          {isDark ? '☀ Light mode' : '☾ Dark mode'}
+        </button>
       </nav>
       <main className="main">
         <Routes>

@@ -312,3 +312,32 @@ class TestPersistenceAcrossRestart:
             # Samples must not be duplicated by re-seeding.
             names = [b["name"] for b in restarted.get("/api/v1/buildings").json()]
             assert names.count("Sample Office A") == 1
+
+
+class TestBuildingUpdate:
+    def test_update_walls_and_name(self, client, building_id):
+        """Regression: PUT /buildings/{id} used to 500 (stray kwarg) — manual
+        editing in the editor was impossible. Editing must work end to end."""
+        detail = client.get(f"/api/v1/buildings/{building_id}").json()
+        walls = [list(w) for w in detail["walls"]]
+        walls.append([3, 1])
+        resp = client.put(
+            f"/api/v1/buildings/{building_id}",
+            json={"name": "Edited Building", "walls": walls},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["name"] == "Edited Building"
+        assert [3, 1] in [list(w) for w in body["walls"]]
+        assert client.get(f"/api/v1/buildings/{building_id}").json()["walls"] == body["walls"]
+
+    def test_update_rejects_invalid_layout(self, client, building_id):
+        resp = client.put(
+            f"/api/v1/buildings/{building_id}",
+            json={"exits": []},  # a building cannot lose all exits
+        )
+        assert resp.status_code == 422
+
+    def test_update_404_for_missing(self, client):
+        resp = client.put("/api/v1/buildings/99999", json={"name": "nope"})
+        assert resp.status_code == 404

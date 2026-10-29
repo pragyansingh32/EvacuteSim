@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { api } from '../api/client'
 import { DisclaimerBanner, ErrorAlert, strategyLabel } from '../components/ui'
+import { useTheme } from '../theme'
 import type { ComparisonResponse, RunSummary } from '../types'
 
 const METRIC_LABELS: Record<string, string> = {
@@ -29,6 +30,7 @@ const METRIC_LABELS: Record<string, string> = {
 
 export default function ComparePage() {
   const [params] = useSearchParams()
+  const { chart } = useTheme()
   const [runs, setRuns] = useState<RunSummary[]>([])
   const [selected, setSelected] = useState<number[]>([])
   const [result, setResult] = useState<ComparisonResponse | null>(null)
@@ -145,9 +147,9 @@ export default function ComparePage() {
               <h3>Headline metrics side by side</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: chart.tick }} />
+                  <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="Evacuation time (s)" fill="#1f6feb" />

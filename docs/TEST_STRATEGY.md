@@ -58,6 +58,15 @@ npm run build     # type-checks (tsc -b) and bundles
 23–27. Covered end-to-end in the recorded browser session (see PHASE_STATUS): sample scenario loads, run starts from the UI, progress and final results visible, comparison over selected runs, understandable errors.
 28. No hardcoded metrics → structural: the frontend has no metric constants; `GridCanvas.test.tsx` and `client.test.ts` verify rendering/formatting only. The disclaimer test guards honest framing.
 
+## The PUT lesson (why endpoint coverage matters end to end)
+
+Manual editing shipped broken: every `PUT /buildings/{id}` returned 500 (a
+stray keyword argument in the service layer) while all 95 existing tests were
+green — because no test exercised the update path. Three regression tests now
+cover update success, invalid-update rejection, and 404. Rule of thumb applied
+since: every endpoint shape (GET/POST/PUT/DELETE × success/error) gets at
+least one test even when the UI appears to work.
+
 ## Known-answer accuracy battery
 
 `app/services/validation_service.py` (surfaced live on the **System Accuracy**

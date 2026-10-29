@@ -81,7 +81,7 @@ sample scenarios (SQLite at `backend/data/evacuatesim.db`).
 ## Tests and checks
 
 ```powershell
-cd backend; ..\.venv\Scripts\python -m pytest tests/     # 95 tests
+cd backend; ..\.venv\Scripts\python -m pytest tests/     # 98 tests
 cd backend; ..\.venv\Scripts\ruff check app tests
 cd frontend; npm test                                     # vitest
 cd frontend; npm run build                                # tsc + bundle

@@ -88,6 +88,27 @@ Added upload-and-convert for existing building plans after user request:
    ~2 s wall time), mass balance re-verified across all stored runs,
    reproduce-endpoint determinism confirmed, battery stability over 5 runs.
 
+## Post-delivery enhancement 3: editor fix + editor UX rebuild + themes
+
+1. **CRITICAL FIX — manual editing was broken.** `PUT /buildings/{id}` returned
+   500 for every save (`_grid_from_parts()` received a stray `description`
+   kwarg), so any edit to an existing building failed with "An unexpected
+   internal error occurred". There was no PUT test, which is how it shipped.
+   Fixed; three regression tests added (update walls/name, invalid update
+   rejected, 404). The edit→save→persist loop is verified in the browser,
+   including the honest 422 path (a wall painted on a zone cell is refused
+   with a clear message).
+2. **Editor UX rebuild** — GridCanvas now paints with pointer events (mouse,
+   touch, pen) computed from SVG coordinates; new tool rail with keyboard
+   shortcuts (W/F/E/Z/X), adjustable brush (1×1–4×4), zoom (−/Fit/+), undo /
+   redo, live hover status bar with explicit **unsaved-changes** indicator,
+   zone management (paint/rename/delete) and per-exit capacity editing.
+3. **Light/dark themes** — full dark theme via CSS variables with a sidebar
+   toggle (respects OS preference on first visit, persisted), theme-aware
+   chart colors, and a redesigned home hero with live stats.
+
+Tests: **98 backend** (+3 PUT regressions), 4 frontend, lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

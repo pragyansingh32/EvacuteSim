@@ -63,7 +63,7 @@ def update_building(db: Session, building_id: int, payload: dict) -> BuildingMod
         "exits": payload.get("exits", current["exits"]),
         "zones": payload.get("zones", current["zones"]),
     }
-    grid = _grid_from_parts(**{**merged, "description": None})
+    grid = _grid_from_parts(**merged)
     warnings = grid.validate()
     building = building_repo.update_building(db, building, grid, payload.get("description"))
     building.warnings = warnings

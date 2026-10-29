@@ -22,35 +22,44 @@ export default function HomePage() {
 
   return (
     <div>
-      <h1>EvacuateSim</h1>
-      <p className="page-sub">
-        An explainable, uncertainty-aware emergency evacuation simulation and scenario
-        optimization platform.
-      </p>
+      <div className="hero card">
+        <div className="hero-text">
+          <h1>EvacuateSim</h1>
+          <p>
+            An explainable, uncertainty-aware emergency evacuation simulation and scenario
+            optimization platform. Draw or import a building, simulate the crowd, and compare
+            routing strategies with reproducible evidence.
+          </p>
+          <div className="toolbar">
+            <Link to="/buildings">
+              <button>Create a building</button>
+            </Link>
+            <Link to="/import">
+              <button>Import an existing plan</button>
+            </Link>
+            <Link to="/library">
+              <button className="secondary">Launch a sample scenario</button>
+            </Link>
+          </div>
+        </div>
+        <div className="hero-stats">
+          <div className="stat">
+            <b>{buildings.length}</b>
+            <span>Buildings</span>
+          </div>
+          <div className="stat">
+            <b>{scenarios.length}</b>
+            <span>Scenarios</span>
+          </div>
+          <div className="stat">
+            <b>{recentRuns.length}</b>
+            <span>Recent runs</span>
+          </div>
+        </div>
+      </div>
       <DisclaimerBanner />
 
       {error && <div className="alert error">{error}</div>}
-
-      <div className="card">
-        <h3>What you can do</h3>
-        <p>
-          Draw a simplified building layout, configure a simulated population, define emergency
-          scenarios (blocked exits, slower occupants, longer reaction times), run a discrete-time
-          evacuation simulation, and compare routing strategies with recorded, reproducible
-          evidence.
-        </p>
-        <div className="toolbar">
-          <Link to="/buildings">
-            <button>Create a building</button>
-          </Link>
-          <Link to="/import">
-            <button>Import an existing plan</button>
-          </Link>
-          <Link to="/library">
-            <button className="secondary">Launch a sample scenario</button>
-          </Link>
-        </div>
-      </div>
 
       <div className="grid-2">
         <div className="card">
