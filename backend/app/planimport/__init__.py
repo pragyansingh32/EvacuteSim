@@ -8,6 +8,7 @@ Every import result therefore carries explicit warnings stating this.
 
 from app.planimport.common import ImportDraft, ImportParams, ImportResult
 from app.planimport.dxf_import import import_from_dxf
+from app.planimport.drawio_import import import_from_drawio
 from app.planimport.image_import import import_from_image
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "ImportResult",
     "import_from_image",
     "import_from_dxf",
+    "import_from_drawio",
 ]

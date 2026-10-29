@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 from app.api.deps import DbSession  # noqa: F401 - reserved for future persistence
 from app.core.config import settings
 from app.core.errors import ValidationError
-from app.planimport import ImportParams, import_from_dxf, import_from_image
+from app.planimport import ImportParams, import_from_dxf, import_from_drawio, import_from_image
 
 router = APIRouter(prefix="/import", tags=["import"])
 
@@ -72,12 +72,15 @@ async def preview_import(
     try:
         if suffix == ".dxf":
             result = import_from_dxf(data, params, safe_name)
+        elif suffix in (".drawio", ".xml"):
+            result = import_from_drawio(data, params, safe_name)
         elif suffix in _IMAGE_EXTENSIONS:
             result = import_from_image(data, params, safe_name)
         else:
             raise ValidationError(
-                f"Unsupported file type '{suffix}'. Upload an image "
-                "(.png/.jpg/.bmp/.tif/.webp) or an ASCII DXF (.dxf)."
+                f"Unsupported file type '{suffix}'. Upload a draw.io diagram "
+                "(.drawio/.xml), an image (.png/.jpg/.bmp/.tif/.webp), or an "
+                "ASCII DXF (.dxf)."
             )
     except ValueError as exc:
         raise ValidationError(str(exc)) from exc

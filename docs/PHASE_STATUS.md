@@ -228,6 +228,40 @@ Regression test added: envelope inset from the grid edge with a margin ring
 one-click run marks all 3 in the simulation's exit-utilization table.
 Tests: **122 backend**, lint clean.
 
+## Post-delivery enhancement 9: draw.io import + recognition fixes
+
+User report: "the system is not able to recognize the uploaded image". Three
+root causes found and fixed, plus the draw.io feature:
+
+1. **draw.io import (precise vector conversion)** — `.drawio` / `.xml` files
+   parsed as mxGraph XML (including draw.io's compressed diagram payload:
+   base64 → raw-deflate → URI-decode). Filled shapes → solid walls,
+   unfilled shapes and edge lines → wall outlines rasterized with
+   Bresenham at exact grid positions, text labels skipped. The semantics
+   pipeline (doors/exits/zones/populations) runs on the vector-true walls.
+   Edge parsing ignores shape references and relative geometry x/y (both
+   would corrupt coordinates). Sample `sample-plan.drawio` added with
+   envelope door gaps; 9 tests including a full pipeline
+   (draw.io → building → scenario → completed run).
+2. **Inverted-plan crop polarity bug** — the content bounding box was always
+   computed from the inverted binary, so for light-on-dark plans the crop
+   chopped OFF the walls (the ink is the bright class there). Polarity now
+   follows the invert flag. This was a core "image not recognized" cause.
+3. **Draft/semantics consistency** — noise-speck removal happened inside the
+   semantics but the draft kept the original walls, so zone cells could
+   contain wall cells ("Zone ZA contains a wall cell" on save). Importers
+   now adopt the semantics' cleaned wall set.
+4. **Crop pad removed** — the 2px pad thinned the outermost wall line below
+   the density threshold; the exterior-flood exit detection no longer needs
+   a pad ring.
+
+Also fixed en route: draw.io edge geometry x/y is a layout hint (not a
+coordinate) and targetPoint was double-appended; the suggested-scenario dt
+now rounds DOWN to satisfy the dt ≤ cell/max-speed validation.
+
+Tests: **131 backend** (+9 drawio, +1 margin-ring regression), 4 frontend;
+lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

@@ -222,6 +222,9 @@ class PlanSemantics:
     openings: int = 0
     noise_removed: int = 0
     warnings: list[str] = field(default_factory=list)
+    # The cleaned wall set (noise removed) — importers must use THESE walls
+    # for the draft so zones and walls stay consistent.
+    walls: set[tuple[int, int]] = field(default_factory=set)
 
 
 def analyze(
@@ -240,6 +243,7 @@ def analyze(
     noise_free, removed = remove_noise(walls)
     result.noise_removed = removed
     walls = noise_free
+    result.walls = walls
 
     all_cells = {(x, y) for x in range(width) for y in range(height)}
     floor = all_cells - walls

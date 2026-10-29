@@ -1,0 +1,73 @@
+<mxfile host="app.diagrams.net" modified="2026-10-30T00:00:00.000Z" agent="EvacuateSim" version="24.0.0">
+  <diagram id="floorplan" name="Floor Plan">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" page="1" pageWidth="600" pageHeight="400">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+                <mxCell id="env0" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="20" as="sourcePoint" />
+            <mxPoint x="580" y="20" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env1" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="20" as="sourcePoint" />
+            <mxPoint x="20" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env2" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="20" as="sourcePoint" />
+            <mxPoint x="580" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env3" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="230" as="sourcePoint" />
+            <mxPoint x="580" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env4" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="380" as="sourcePoint" />
+            <mxPoint x="250" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env5" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="330" y="380" as="sourcePoint" />
+            <mxPoint x="580" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wallW" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="10" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="wallW2" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="200" y="230" width="10" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="wallE" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="10" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="wallE2" value="" style="rounded=0;fillColor=none;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="210" width="10" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar1" value="" style="rounded=0;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="295" y="100" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar2" value="" style="rounded=0;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="295" y="290" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="labelW" value="West office" style="text;html=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="labelH" value="Central hall" style="text;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="40" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="labelE" value="East office" style="text;html=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="40" width="100" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -90,14 +90,17 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
 
     # Crop to the drawn content: scanner margins would otherwise become a
     # phantom floor ring outside the building envelope.
-    content_bbox = binary.point(lambda v: 255 - v).getbbox()
+    # Content bbox must use the INK polarity: dark-ink plans have ink at 0 in
+    # the binary (invert it); light-ink plans (invert mode) have ink at 255.
+    if params.invert:
+        content_bbox = binary.getbbox()
+    else:
+        content_bbox = binary.point(lambda v: 255 - v).getbbox()
     crop_box = [0, 0, src_w, src_h]
     if content_bbox is not None:
-        pad = 2
-        left = max(0, content_bbox[0] - pad)
-        top = max(0, content_bbox[1] - pad)
-        right = min(binary.width, content_bbox[2] + pad)
-        bottom = min(binary.height, content_bbox[3] + pad)
+        # Crop exactly to the ink: the exterior-flood exit detection no longer
+        # needs a pad ring, and a pad would thin the outermost wall line.
+        left, top, right, bottom = content_bbox
         if (right - left) >= 8 and (bottom - top) >= 8:
             binary = binary.crop((left, top, right, bottom))
             crop_box = [left, top, right, bottom]
@@ -149,6 +152,8 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
             cell_size_m=cell_size,
             occupancy_density=params.occupancy_density,
         )
+        # Keep the draft consistent with the semantics (noise removed).
+        walls = semantics.walls
 
     return finish_grid(
         walls,

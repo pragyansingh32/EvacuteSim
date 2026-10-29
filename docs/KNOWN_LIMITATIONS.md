@@ -43,7 +43,12 @@ docs/SIMULATION_MODEL.md.
     are area × density (an assumption). Warnings list unreachable rooms; the
     editor remains the review step. Binary DXF, PDF, and INSERT blocks are
     not imported. Scale relies on the stated plan width.
-11. **Static scenarios.** Blocked exits/cells cannot change mid-run; no
+11. **draw.io import conventions.** Vector import follows explicit drawing
+    conventions: walls = unfilled rectangles/lines (fillColor=none), solid
+    obstacles = filled shapes, labels = text shapes (ignored). Doors must be
+    gaps in the wall geometry. Edges anchored to shapes are treated as
+    connections, not walls. Multi-page files import the first page only.
+12. **Static scenarios.** Blocked exits/cells cannot change mid-run; no
     scheduled events, no occupant re-spawning.
 11. **Experiments are full-factorial only.** No Latin hypercube/optimization
     search; sweeps are bounded at 200 planned runs per experiment.

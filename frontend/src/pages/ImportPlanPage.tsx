@@ -67,7 +67,8 @@ export default function ImportPlanPage() {
     fileUrlRef.current = url
     setFileUrl(url)
     setFileName(f.name)
-    setIsDxf(f.name.toLowerCase().endsWith(".dxf"))
+    const lower = f.name.toLowerCase()
+    setIsDxf(lower.endsWith(".dxf") || lower.endsWith(".drawio") || lower.endsWith(".xml"))
     setName(f.name.replace(/\.[^.]+$/, "") || "Imported building")
   }
 
@@ -173,7 +174,7 @@ export default function ImportPlanPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".png,.jpg,.jpeg,.bmp,.gif,.tif,.tiff,.webp,.dxf"
+              accept=".png,.jpg,.jpeg,.bmp,.gif,.tif,.tiff,.webp,.dxf,.drawio,.xml"
               onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
             />
             {fileName && <div className="muted">Selected: {fileName}</div>}
@@ -183,9 +184,11 @@ export default function ImportPlanPage() {
               </button>
             </div>
             <div className="kbd-note">
-              Supported: PNG/JPG/BMP/GIF/TIFF/WebP images and plain-text (ASCII) DXF with
-              LINE / LWPOLYLINE / CIRCLE geometry. Max 10 MB. Binary DXF and PDF are not
-              supported.
+              Supported: <strong>draw.io diagrams (.drawio / .xml — most precise)</strong>,
+              PNG/JPG/BMP/GIF/TIFF/WebP images, and plain-text (ASCII) DXF. Max 10 MB.
+              Binary DXF and PDF are not supported. In draw.io, draw walls as unfilled
+              rectangles and lines, leave gaps for doors, and put text labels on their own
+              text shapes (labels are ignored).
             </div>
           </div>
 
@@ -226,7 +229,7 @@ export default function ImportPlanPage() {
                     onChange={(e) => setAutoThreshold(e.target.checked)}
                     style={{ width: "auto" }}
                   />
-                  Automatic ink threshold (Otsu — recommended)
+                  Automatic ink threshold (Otsu — recommended; image plans only)
                 </label>
                 {!autoThreshold && (
                   <label className="field">
