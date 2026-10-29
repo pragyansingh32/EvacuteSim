@@ -46,6 +46,12 @@ export function strategyLabel(s: string): string {
   return STRATEGY_LABELS[s] ?? s
 }
 
+export function fmtBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
 export function fmt(v: number | null | undefined, digits = 1): string {
   if (v == null) return '—'
   return v.toFixed(digits)

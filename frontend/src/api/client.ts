@@ -3,6 +3,7 @@
 
 import type {
   BuildingDetail,
+  RunMetrics,
   BuildingSummary,
   CompareRow,
   ComparisonResponse,
@@ -112,6 +113,27 @@ export const api = {
   // system validation
   validationBattery: () => request<ValidationReport>('/validation/battery'),
 
+  // AI advisor
+  advisorAnalyze: (runId: number) =>
+    request<AdvisorReport>('/advisor/analyze', { method: 'POST', body: JSON.stringify({ run_id: runId }) }),
+  advisorApply: (runId: number, recommendationId: string) =>
+    request<AdvisorApplyResult>('/advisor/apply', {
+      method: 'POST',
+      body: JSON.stringify({ run_id: runId, recommendation_id: recommendationId }),
+    }),
+
+  // restore points
+  listRestorePoints: () => request<RestorePoint[]>('/restore-points'),
+  createRestorePoint: (name: string) =>
+    request<RestorePoint>('/restore-points', { method: 'POST', body: JSON.stringify({ name }) }),
+  restorePointDetail: (id: number) => request<RestorePoint>(`/restore-points/${id}`),
+  restoreFromPoint: (id: number) =>
+    request<{ restored: Record<string, number>; snapshot: string }>(
+      `/restore-points/${id}/restore`,
+      { method: 'POST' },
+    ),
+  deleteRestorePoint: (id: number) => request<void>(`/restore-points/${id}`, { method: 'DELETE' }),
+
   // experiments
   createExperiment: (body: unknown) =>
     request<ExperimentSummary>('/experiments', { method: 'POST', body: JSON.stringify(body) }),
@@ -161,6 +183,47 @@ export interface ValidationReport {
   accuracy_pct: number
   cases: ValidationCase[]
   notes: string[]
+}
+
+export interface AdvisorObservation {
+  severity: 'ok' | 'info' | 'warn' | 'critical'
+  title: string
+  detail: string
+  evidence: Record<string, unknown>
+}
+
+export interface AdvisorRecommendation {
+  id: string
+  title: string
+  rationale: string
+  patch: Record<string, unknown>
+  patch_summary: string
+  estimate: string
+}
+
+export interface AdvisorReport {
+  run_id: number
+  verdict: string
+  severity: 'ok' | 'info' | 'warn' | 'critical'
+  observations: AdvisorObservation[]
+  recommendations: AdvisorRecommendation[]
+  disclaimer: string
+}
+
+export interface AdvisorApplyResult {
+  recommendation: AdvisorRecommendation
+  scenario_id: number
+  before: { run_id: number; metrics: RunMetrics }
+  after: { run_id: number; status: string; error: { code: string; message: string } | null; metrics: RunMetrics }
+}
+
+export interface RestorePoint {
+  id: number
+  name: string
+  created_at: string
+  counts: Record<string, number>
+  size_bytes: number
+  is_auto: boolean
 }
 
 export function formatRunRow(run: CompareRow): Record<string, string | number | null> {

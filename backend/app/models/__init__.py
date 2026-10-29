@@ -5,6 +5,7 @@ from app.models.building import BuildingModel
 from app.models.experiment import ExperimentModel, ExperimentRunModel
 from app.models.run import RunModel
 from app.models.scenario import ScenarioModel
+from app.models.snapshot import SnapshotModel
 
 __all__ = [
     "Base",
@@ -13,4 +14,5 @@ __all__ = [
     "ExperimentRunModel",
     "RunModel",
     "ScenarioModel",
+    "SnapshotModel",
 ]

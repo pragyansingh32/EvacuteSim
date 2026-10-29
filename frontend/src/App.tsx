@@ -1,5 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
 import AccuracyPage from './pages/AccuracyPage'
+import AdvisorPage from './pages/AdvisorPage'
+import RestorePointsPage from './pages/RestorePointsPage'
 import BuildingEditorPage from './pages/BuildingEditorPage'
 import ComparePage from './pages/ComparePage'
 import ExperimentsPage from './pages/ExperimentsPage'
@@ -34,7 +36,10 @@ export default function App() {
         <NavLink to="/runs">Runs</NavLink>
         <NavLink to="/compare">Compare</NavLink>
         <NavLink to="/experiments">Experiments</NavLink>
+        <NavLink to="/advisor">AI Advisor</NavLink>
         <NavLink to="/accuracy">System Accuracy</NavLink>
+        <div className="section-label">System</div>
+        <NavLink to="/restore-points">Restore Points</NavLink>
         <div className="footnote">
           Educational/research simulation. Outcomes depend on model assumptions and are not
           certified safety predictions.
@@ -57,6 +62,8 @@ export default function App() {
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
           <Route path="/accuracy" element={<AccuracyPage />} />
+          <Route path="/advisor" element={<AdvisorPage />} />
+          <Route path="/restore-points" element={<RestorePointsPage />} />
         </Routes>
       </main>
     </div>

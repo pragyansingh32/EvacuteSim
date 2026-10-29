@@ -131,6 +131,28 @@ between two recorded states — nothing invented); verified in-browser: 4 s of
 playback at 8× advanced the run from t=0 to half-evacuated, matching T50.
 98 backend + 4 frontend tests, lint and tsc clean.
 
+## Post-delivery enhancement 5: AI Advisor + restore points
+
+1. **AI Advisor** (rule-based expert system — no LLM, no external API):
+   analyzes a completed run's recorded data (exit utilization shares vs
+   capacity, queue dominance, congestion clusters, unreachable occupants,
+   pre-movement dominance, horizon sufficiency), produces severity-rated
+   observations and concrete configuration patches, and — on request — applies
+   a patch to a scenario copy and runs the REAL simulation for measured
+   before/after evidence. Verified live: on the baseline office run it found
+   the door bottleneck; widening EA 1.2 → 1.5 p/s measured T90 53.0 → 47.5 s
+   (−10.4%), mean queue −12.8%. The tested plan is preserved as a new
+   re-runnable scenario. New **AI Advisor** page + `POST /advisor/analyze`
+   and `/advisor/apply`; "Ask the AI Advisor" shortcut on every run view.
+2. **Restore points** — full-workspace snapshots (buildings, scenarios, runs,
+   experiments) as JSON documents + metadata rows; restore wipes and re-inserts
+   inside one transaction with autoincrement-sequence repair, and ALWAYS
+   auto-backs-up the current state first (restores are reversible). New
+   **Restore Points** page with two-step restore confirmation; 3 backend tests
+   cover snapshot → drift → restore → auto-backup and orphan-file cleanup.
+
+Tests: **111 backend** (+13), 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

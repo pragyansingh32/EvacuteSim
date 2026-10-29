@@ -12,6 +12,29 @@ All errors use one envelope:
 `422 request_validation_error` adds `details[]` with field locations. Internal
 failures return opaque `500 internal_error` (details only in server logs).
 
+## AI Advisor
+
+Rule-based expert system over recorded run data — deterministic, explainable,
+no external AI API.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/advisor/analyze` | Body `{run_id}`. Returns `{verdict, severity, observations[], recommendations[], disclaimer}`. Each recommendation carries an appliable `patch` and `patch_summary`. |
+| POST | `/advisor/apply` | Body `{run_id, recommendation_id}`. Creates a scenario copy with the patch, runs the REAL simulation synchronously, and returns `{recommendation, scenario_id, before{run_id, metrics}, after{run_id, status, metrics}}`. |
+
+Advisor rules: door-bottleneck capacity widening, strategy switching on exit
+imbalance, horizon extension, total-egress shortfall, congestion hotspots near
+doors, pre-movement tightening, and sealed-area layout warnings (manual fix).
+
+## Restore points
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/restore-points` | List snapshots (newest first) with per-table counts. |
+| POST | `/restore-points` | Body `{name}`. Snapshots all data tables (buildings, scenarios, runs, experiments, experiment_runs) to `backend/data/snapshots/<file>.json`. |
+| POST | `/restore-points/{id}/restore` | Wipes and re-inserts all data tables from the snapshot **inside one transaction**; the current state is auto-backed-up first (safety net), so a restore is reversible. |
+| DELETE | `/restore-points/{id}` | Delete snapshot row + file. |
+
 ## Health
 
 | Method | Path | Description |

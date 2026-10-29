@@ -394,6 +394,9 @@ export default function RunViewPage() {
             <Link to={`/scenarios/${run.scenario_id}`}>
               <button className="secondary">Open source scenario</button>
             </Link>
+            <Link to={`/advisor?run=${run.id}`}>
+              <button className="secondary">Ask the AI Advisor</button>
+            </Link>
           </div>
           <details style={{ marginTop: 10 }}>
             <summary className="muted">Run configuration (exact values used)</summary>

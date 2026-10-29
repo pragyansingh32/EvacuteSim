@@ -34,6 +34,12 @@ evidence for every number shown.
   utilization, congestion indicator, side-by-side strategy comparison.
 - **Experiments** — full-factorial parameter sweeps × seeds, all executed as
   real runs, with a results table and CSV export.
+- **AI Advisor** — a rule-based expert system observes a completed run and
+  proposes a better plan (door widening, strategy switch, horizon changes);
+  each proposal is applied to a scenario copy and verified by a real test run
+  with before/after metrics. No external AI API.
+- **Restore points** — snapshot the whole workspace and roll back at any time;
+  every restore auto-backs-up the current state first.
 - **System Accuracy page** — a 14-case known-answer battery (designs that must
   evacuate vs. designs that must fail — sealed rooms, undersized doors,
   impossible horizons — plus physics-bound checks), run live against the real
@@ -81,7 +87,7 @@ sample scenarios (SQLite at `backend/data/evacuatesim.db`).
 ## Tests and checks
 
 ```powershell
-cd backend; ..\.venv\Scripts\python -m pytest tests/     # 98 tests
+cd backend; ..\.venv\Scripts\python -m pytest tests/     # 111 tests
 cd backend; ..\.venv\Scripts\ruff check app tests
 cd frontend; npm test                                     # vitest
 cd frontend; npm run build                                # tsc + bundle

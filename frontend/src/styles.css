@@ -806,3 +806,30 @@ body:has([data-theme='dark']) {
   .occ-ghost, .exit-halo, .exit-pulse-ring { animation: none; }
   .occ { transition: none !important; }
 }
+
+
+/* ---- AI advisor ---- */
+
+.advisor-obs {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.advisor-obs:last-child { border-bottom: none; }
+.advisor-obs-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+.advisor-rec {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.advisor-rec:last-child { border-bottom: none; }
+.advisor-result {
+  margin-top: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}

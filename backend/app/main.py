@@ -13,12 +13,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.api import (
+    routes_advisor,
     routes_buildings,
     routes_experiments,
     routes_health,
     routes_import,
     routes_runs,
     routes_scenarios,
+    routes_snapshots,
     routes_validation,
 )
 from app.core.config import settings
@@ -78,6 +80,8 @@ app.include_router(routes_runs.router, prefix=API)
 app.include_router(routes_experiments.router, prefix=API)
 app.include_router(routes_import.router, prefix=API)
 app.include_router(routes_validation.router, prefix=API)
+app.include_router(routes_advisor.router, prefix=API)
+app.include_router(routes_snapshots.router, prefix=API)
 
 
 # Root: serve the built frontend when present, otherwise a small JSON index.
