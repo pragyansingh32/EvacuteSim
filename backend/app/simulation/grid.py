@@ -68,12 +68,18 @@ class BuildingGrid:
         return (x, y) in self.walls
 
     def walkable_cells(self) -> set[tuple[int, int]]:
-        """All cells occupants may stand on (floor plus exit cells)."""
+        """All cells occupants may stand on: floor plus exit cells.
+
+        Exit cells are walkable by definition — an exit placed in a wall line
+        is a doorway. Without this, doors on the building envelope would be
+        unreachable and no evacuation could start.
+        """
         cells: set[tuple[int, int]] = set()
         for y in range(self.height):
             for x in range(self.width):
                 if (x, y) not in self.walls:
                     cells.add((x, y))
+        cells.update(e.key() for e in self.exits.values())
         return cells
 
     def zone_cells(self, zone_id: str) -> list[tuple[int, int]]:
@@ -165,6 +171,13 @@ class BuildingGrid:
         exit_cells = {e.key() for e in self.exits.values()}
         dist = bfs_distance_field(self.width, self.height, walkable, exit_cells)
         reachable = set(dist)
+        # An exit with no walkable neighbor can never be used.
+        for exit_def in self.exits.values():
+            neighbors = [(exit_def.x + dx, exit_def.y + dy) for dx, dy in NEIGHBOR_OFFSETS]
+            if not any(n in walkable and n not in exit_cells for n in neighbors):
+                warnings.append(
+                    f"Exit '{exit_def.id}' has no adjacent walkable cell and can never be used."
+                )
         unreachable_floor = walkable - reachable
         if unreachable_floor:
             warnings.append(

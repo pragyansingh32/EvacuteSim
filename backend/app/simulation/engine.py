@@ -474,9 +474,11 @@ class EvacuationEngine:
             self._step()
         else:
             self.status = "completed"
-        if self.config.record_frames and self.frames:
+        if self.config.record_frames:
             final_t = self.step_index * self.dt
-            if self.frames[-1]["t"] < final_t - 1e-9:
+            if not self.frames or self.frames[-1]["t"] < final_t - 1e-9:
+                # Record the true end state, bypassing the interval guard.
+                self._next_frame_t = 0.0
                 self._record_frame(final_t)
         return self._finalize(int((wallclock.perf_counter() - started) * 1000))
 

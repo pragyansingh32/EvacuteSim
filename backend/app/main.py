@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.api import (
     routes_buildings,
@@ -76,21 +76,34 @@ app.include_router(routes_runs.router, prefix=API)
 app.include_router(routes_experiments.router, prefix=API)
 
 
-@app.get("/")
-def root() -> dict:
-    return {
-        "name": settings.app_name,
-        "api": API,
-        "docs": "/docs",
-        "disclaimer": (
-            "Educational/research simulation tool. Outcomes depend on model "
-            "assumptions and are not certified safety predictions."
-        ),
-    }
-
-
-# Serve the built frontend if it exists (production-style single-process demo).
+# Root: serve the built frontend when present, otherwise a small JSON index.
 _FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _FRONTEND_DIST.is_dir():
-    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str) -> FileResponse:
+        """Serve static files and fall back to index.html for SPA routes.
+
+        Registered after the API routers, so /api/*, /docs, and /openapi.json
+        keep matching first. Guarded against path traversal.
+        """
+        if full_path:
+            candidate = (_FRONTEND_DIST / full_path).resolve()
+            if candidate.is_file() and str(candidate).startswith(str(_FRONTEND_DIST)):
+                return FileResponse(candidate)
+        return FileResponse(_FRONTEND_DIST / "index.html")
+
     logger.info("Serving frontend from %s", _FRONTEND_DIST)
+else:
+
+    @app.get("/")
+    def root() -> dict:
+        return {
+            "name": settings.app_name,
+            "api": API,
+            "docs": "/docs",
+            "disclaimer": (
+                "Educational/research simulation tool. Outcomes depend on model "
+                "assumptions and are not certified safety predictions."
+            ),
+        }

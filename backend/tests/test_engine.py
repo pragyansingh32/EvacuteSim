@@ -343,6 +343,27 @@ class TestUnreachableAndBlocking:
                 walked.add((x, y))
         assert all(cell not in walked for cell in [(1, 0), (2, 0), (3, 0)])
 
+    def test_exit_in_border_wall_is_reachable(self):
+        """A door placed IN a wall line (typical for building envelopes) must
+        be walkable; regression test for the all-unreachable bug."""
+        grid = grid_from_rows(
+            rows=[
+                "E####E",
+                "......",
+                "#....#",
+                "######",
+            ],
+            exits=[
+                {"id": "EA", "x": 0, "y": 0},
+                {"id": "EB", "x": 5, "y": 0},
+            ],
+            zones=[{"id": "Z", "cells": [[1, 1], [2, 1], [3, 1], [4, 1]]}],
+        )
+        result = EvacuationEngine(grid, fast_config(population=4, seed=3)).run()
+        assert result.status == "completed"
+        assert result.evacuated_count == 4
+        assert result.unreachable_count == 0
+
     def test_scenario_with_unknown_zone_rejected(self, open_room):
         with pytest.raises(ValidationError, match="unknown zone"):
             EvacuationEngine(open_room, fast_config(zone="NOPE"))
@@ -388,9 +409,11 @@ class TestCongestionRecording:
         ).run()
         times = [f["t"] for f in result.frames]
         assert times[0] == 0.0
-        assert all(b - a >= 2.0 - 1e-6 for a, b in zip(times, times[1:], strict=False))
-        # Final frame shows the end state.
-        assert result.frames[-1]["t"] >= result.sim_time_s - 2.0
+        # All frames except the true end-state frame follow the interval.
+        assert all(b - a >= 2.0 - 1e-6 for a, b in zip(times[:-1], times[1:-1], strict=False))
+        # The final frame records the actual end state (bypasses the interval).
+        assert result.frames[-1]["t"] == result.sim_time_s
+        assert result.frames[-1]["occupants"] == []
 
 
 def _contest_grid():

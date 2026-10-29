@@ -67,9 +67,11 @@ class TestHealth:
         body = resp.json()
         assert body["status"] == "ok"
 
-    def test_root_disclaimer(self, client):
-        body = client.get("/").json()
-        assert "not certified safety" in body["disclaimer"]
+    def test_api_documentation_carries_disclaimer(self, client):
+        """The disclaimer must be part of the API description regardless of
+        whether the built frontend is being served at /."""
+        openapi = client.get("/openapi.json").json()
+        assert "certified fire-safety system" in openapi["info"]["description"].lower()
 
 
 class TestBuildingEndpoints:
