@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
-import pytest
+import os
+import tempfile
+from pathlib import Path
 
-from app.simulation.grid import BuildingGrid
+# Test isolation: point the app at a throwaway SQLite file BEFORE any app
+# import reads settings. Each pytest session gets a fresh database.
+_TEST_DB_DIR = Path(tempfile.gettempdir()) / "evacuatesim-tests"
+_TEST_DB_DIR.mkdir(parents=True, exist_ok=True)
+_TEST_DB = _TEST_DB_DIR / f"test-{os.getpid()}.db"
+os.environ["EVACUATESIM_DATABASE_URL"] = f"sqlite:///{_TEST_DB.as_posix()}"
+
+import pytest  # noqa: E402
+from app.simulation.grid import BuildingGrid  # noqa: E402
 
 
 def grid_from_rows(

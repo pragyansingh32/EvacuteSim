@@ -1,9 +1,9 @@
 """Grid model and validation tests."""
 
 import pytest
-
 from app.core.errors import ValidationError
 from app.simulation.grid import BuildingGrid, cells_to_key, key_to_cells
+
 from tests.conftest import grid_from_rows
 
 

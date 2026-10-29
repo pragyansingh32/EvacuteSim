@@ -88,7 +88,9 @@ class BuildingGrid:
 
     # ---------- scenario-aware walkability ----------
 
-    def effective_blocked(self, blocked_cells: set[tuple[int, int]], blocked_exit_ids: set[str]) -> set[tuple[int, int]]:
+    def effective_blocked(
+        self, blocked_cells: set[tuple[int, int]], blocked_exit_ids: set[str]
+    ) -> set[tuple[int, int]]:
         """Cells removed from the walkable set by a scenario.
 
         Blocked exits become impassable walls; extra blocked cells are added walls.

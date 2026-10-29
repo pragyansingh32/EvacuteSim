@@ -199,6 +199,17 @@ class EvacuationEngine:
 
         self._spawn_occupants()
 
+        # Adaptive frame interval: cap the number of stored frames for very
+        # long runs so result payloads stay bounded.
+        est_frames = (self.dt * self._max_steps()) / max(config.frame_interval_s, 1e-9)
+        if est_frames > settings.max_frames_per_run:
+            config.frame_interval_s = round(
+                (self.dt * self._max_steps()) / settings.max_frames_per_run, 3
+            )
+            self.warnings.append(
+                f"Frame interval increased to {config.frame_interval_s}s to cap stored frames."
+            )
+
         reference_speed = self._reference_speed()
         self.strategy_ctx = StrategyContext(
             exit_ids=sorted(self.exits_runtime),
@@ -403,7 +414,7 @@ class EvacuationEngine:
         counts in a seeded shuffled order.
         """
         by_zone: dict[str, list[int]] = {}
-        for occ, zone_id in zip(self.occupants, self.zone_of_placement):
+        for occ, zone_id in zip(self.occupants, self.zone_of_placement, strict=False):
             by_zone.setdefault(zone_id, []).append(occ.id)
 
         assignments: dict[int, str] = {}
@@ -416,7 +427,7 @@ class EvacuationEngine:
                 continue  # occupants will fall back at resolve time
             exit_pool = list(exit_pool)
             self.rng.shuffle(exit_pool)
-            for occ_id, exit_id in zip(sorted(occ_ids), exit_pool):
+            for occ_id, exit_id in zip(sorted(occ_ids), exit_pool, strict=False):
                 assignments[occ_id] = exit_id
         return assignments
 

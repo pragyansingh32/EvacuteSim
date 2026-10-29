@@ -164,7 +164,9 @@ class BalancedAssignmentStrategy(RoutingStrategy):
     def choose_exit(self, cell: tuple[int, int], speed_mps: float, ctx: StrategyContext) -> str | None:  # noqa: ARG002
         raise NotImplementedError("Balanced strategy resolves via assigned_exit_for(), not choose_exit.")
 
-    def assigned_exit_for(self, occupant_id: int, cell: tuple[int, int], speed_mps: float, ctx: StrategyContext) -> str | None:
+    def assigned_exit_for(
+        self, occupant_id: int, cell: tuple[int, int], speed_mps: float, ctx: StrategyContext
+    ) -> str | None:
         assigned = self.occupant_assignments.get(occupant_id)
         if assigned is not None and cell in ctx.dist_fields[assigned]:
             return assigned

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
-
 from app.core.errors import ValidationError
 from app.simulation.engine import EngineConfig, EvacuationEngine
+
 from tests.conftest import grid_from_rows
 
 
@@ -388,7 +388,7 @@ class TestCongestionRecording:
         ).run()
         times = [f["t"] for f in result.frames]
         assert times[0] == 0.0
-        assert all(b - a >= 2.0 - 1e-6 for a, b in zip(times, times[1:]))
+        assert all(b - a >= 2.0 - 1e-6 for a, b in zip(times, times[1:], strict=False))
         # Final frame shows the end state.
         assert result.frames[-1]["t"] >= result.sim_time_s - 2.0
 

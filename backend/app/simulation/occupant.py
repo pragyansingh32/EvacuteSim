@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # Occupant lifecycle states.
 STATUS_WAITING = "waiting"      # pre-movement delay not yet elapsed

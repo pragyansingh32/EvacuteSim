@@ -5,6 +5,7 @@ them directly. Stack traces are never exposed to clients.
 """
 
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 
@@ -43,6 +44,24 @@ async def evacuatesim_error_handler(_request: Request, exc: EvacuateSimError) ->
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": {"code": exc.code, "message": exc.message}},
+    )
+
+
+async def request_validation_error_handler(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "request_validation_error",
+                "message": "The request body failed validation.",
+                "details": [
+                    {"loc": list(err.get("loc", [])), "msg": err.get("msg")}
+                    for err in exc.errors()[:10]
+                ],
+            }
+        },
     )
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.simulation.engine import EngineConfig, EvacuationEngine
+
 from tests.conftest import grid_from_rows
 
 
