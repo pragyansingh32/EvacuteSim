@@ -21,9 +21,13 @@ physics. Outcomes depend on model assumptions and are not safety predictions for
 | OS | Windows 10/11 (win32), Git Bash shell |
 | Python | 3.14.7 (system) + project venv at `.venv\` |
 | Node.js | v24.20.0, npm 11.19.0 |
-| Backend deps | fastapi 0.162, pydantic 2.14, sqlalchemy 2.1, numpy 2.5, pytest 9.2, httpx, ruff — installed and import-verified |
-| Frontend deps | React 19 + TypeScript + Vite (installed in Phase 1) |
+| Backend deps | fastapi 0.162, pydantic **2.12.5** (pinned — Smart App Control blocks newer pydantic_core builds), sqlalchemy 2.1, numpy 2.5, pytest 9.2, httpx, ruff |
+| Frontend deps | React 19 + TypeScript + Vite + Recharts |
 | AI API key | Not required — no LLM is used anywhere in the runtime |
+
+**Delivery note:** all 12 phases completed. Final validation: 79 backend tests
++ 4 frontend tests green, ruff clean, production build succeeds, and the full
+user workflow verified in a real browser (see `docs/PHASE_STATUS.md`).
 
 ## Architecture summary
 

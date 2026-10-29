@@ -1,0 +1,27 @@
+# Optional reproducibility helper: backend (with built frontend baked in via
+# a separate build stage is overkill locally — compose runs the backend and
+# the Vite dev server side by side). For the simplest demo, run the backend
+# natively with frontend/dist present.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - evacuatesim-data:/data
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  evacuatesim-data:

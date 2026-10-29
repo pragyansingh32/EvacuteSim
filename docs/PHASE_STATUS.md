@@ -1,45 +1,62 @@
 # Phase Status
 
-Live development log. Updated as phases complete. Last updated: end of Phase 4.
+Final status after the complete development session (Phase 0 → 11).
 
-| Phase | Scope | Status | Validation performed |
+| Phase | Scope | Status | Validation |
 | --- | --- | --- | --- |
-| 0 | Workspace inspection | DONE | Empty workspace confirmed; Python 3.14.7, Node 24.20, npm 11.19 verified; venv created |
-| 1 | Project foundation | DONE | Backend config/db/errors modules; pyproject with ruff+pytest config; .gitignore; docs scaffold |
-| 2 | Building representation | DONE (backend) | `BuildingGrid` with validation: dims, exits, zones, reachability warnings; 11 grid tests pass |
-| 3 | Simulation engine | DONE | Discrete-time engine: movement accumulation, conflicts, following, cycle swaps, exit throughput, frames, timeline; engine tests pass |
-| 4 | Routing strategies | DONE | nearest_exit / capacity_aware / balanced_assignment + fallback; strategy tests pass |
-| 5 | Persistence + samples | IN PROGRESS | SQLAlchemy models next |
-| 6 | Backend API | PENDING | |
-| 7 | Visualization | PENDING | |
-| 8 | Analytics/comparison | PENDING | |
-| 9 | Experiment runner | PENDING | |
-| 10 | Full testing + E2E | PENDING | |
-| 11 | Packaging/docs | PENDING | |
+| 0 | Workspace inspection | **DONE** | Empty workspace; Python 3.14.7, Node 24.20, npm 11.19 verified; venv created; plan written |
+| 1 | Project foundation | **DONE** | Backend scaffold + health endpoint tested; frontend scaffold built |
+| 2 | Building representation + editor | **DONE** | `BuildingGrid` validation (11 grid tests); SVG editor with paint/undo/zones/exits/save verified in browser |
+| 3 | Simulation engine | **DONE** | 28 engine tests: movement, conflicts, throughput, mass balance, reproducibility, limits |
+| 4 | Routing strategies | **DONE** | 11 strategy tests: baseline, capacity-aware, balanced + fallback, unreachable handling |
+| 5 | Persistence + samples | **DONE** | SQLite models/repos; restart-persistence test; 2 sample buildings + 5 synthetic sample scenarios seeded idempotently |
+| 6 | Backend API | **DONE** | 23 API integration tests (validation, run lifecycle, comparison, reproduction, error honesty) |
+| 7 | Visualization | **DONE** | Live polling + recorded-frame playback (play/pause/step/speed/congestion) verified in browser |
+| 8 | Analytics & comparison | **DONE** | Timeline/exit-utilization charts, compare table + verdicts, honest notes |
+| 9 | Experiment runner | **DONE** | Full-factorial sweeps × seeds; results table; CSV export verified |
+| 10 | Full testing + E2E | **DONE** | 79 backend tests + 4 frontend tests green; browser E2E of the complete workflow (see below) |
+| 11 | Packaging + docs | **DONE** | This document set, README, scripts, verified setup instructions |
 
-## Environment constraints discovered
+## Test totals at delivery
 
-- **Smart App Control is ON** on this machine. It blocked `pydantic_core 2.50.2`
-  (too new, no cloud reputation). Fixed by pinning `pydantic==2.12.5` whose
-  compiled core is allow-listed. numpy and ruff binaries pass. If a dependency
-  update reintroduces DLL blocks, pin older versions (see `KNOWN_LIMITATIONS.md`).
+- Backend: **79 passed** (`pytest tests/`), ruff clean.
+- Frontend: **4 passed** (vitest), `tsc -b` clean, production build succeeds.
+- Browser E2E (recorded during development, ZCode in-app browser):
+  1. Home renders with real seeded data.
+  2. Scenario library lists 5 synthetic samples with honest labels.
+  3. "Run now" starts a run; live view polls, then shows 120/120 evacuated.
+  4. Frame playback advances (t=0 → 62.3 s), step/speed/congestion controls work.
+  5. Compare page: 3 runs side by side with per-metric verdicts and notes.
+  6. Experiments: strategy sweep × 3 seeds = 9 runs completed; results table + CSV export verified.
+  7. Building editor: painted walls, placed 2 exits, painted a zone, saved; the painted building then ran a successful 8/8 scenario through the API.
+  8. Reproduce-with-seed and failed-run honesty verified via API tests.
 
-## Bugs found and fixed during Phase 3/4 (for the record)
+## Notable defects found and fixed (regression-tested)
 
-1. Stale occupancy set: `_step` copied `self.occupied` but never wrote back —
-   occupants haunted their spawn cells; fixed by making `self.occupied` the
-   single live source of truth (discharge also frees door cells now).
-2. Starvation deadlock in contests: fixed-priority contest winners blocked by
-   standing occupants starved everyone behind them. Fixed with a rotated
-   deterministic global request order (round-robin by step).
-3. Cycle (swap) application could remove a cell already claimed by an earlier
-   cycle member (double discard) — could produce two occupants in one cell.
-   Fixed: vacate all origins first, then move with discard suppressed.
-4. Exit accumulator could under-use high-capacity exits (cap applied before
-   discharge). Fixed: accumulate uncapped, discharge multiple per step, cap
-   residual credit at 1.0.
-5. Occupants spawning on an exit cell could discharge before reacting — fixed
-   with a `reacted` flag required for discharge.
-6. `fallback_count` was zeroed by init order after being computed.
+1. **Exits in wall lines were impassable** (sample buildings' doors sat on the
+   border) → exit cells are walkable by definition + regression test.
+2. **Stale occupancy set** — movements updated a per-step copy, never the
+   canonical state → single live source of truth.
+3. **Contest starvation deadlock** — fixed-priority winners blocked forever →
+   rotated deterministic order (round-robin by step).
+4. **Cycle swap double-discard** could put two occupants in one cell → vacate
+   all origins, then move with discard suppressed.
+5. **Exit accumulator under-used high-capacity doors** → accumulate, discharge
+   multiple, bank ≤ 1 credit when idle.
+6. **Spawn-on-exit occupants could discharge before reacting** → `reacted`
+   flag gates discharge.
+7. **`fallback_count` zeroed by init order** after computation.
+8. **SPA routes 404'd** behind the static mount → guarded SPA fallback route.
+9. **Final playback frame could lag the end state** → true end-state frame
+   recorded (bypassing the interval guard).
 
-Next action: implement persistence models + repositories + sample data (Phase 5), then API layer (Phase 6).
+## Environment constraints
+
+- Windows Smart App Control blocked `pydantic_core 2.50.2` (unproven cloud
+  reputation) → pinned `pydantic==2.12.5`. numpy/ruff binaries pass.
+- Recorded in KNOWN_LIMITATIONS.md with recovery guidance.
+
+## Outstanding work
+
+None blocking delivery. Future ideas (not promised): multi-floor routing,
+dynamic mid-run events, automated browser E2E in CI, calibration tooling.
