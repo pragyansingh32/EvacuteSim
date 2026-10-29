@@ -128,15 +128,15 @@ def _gap_candidates(
     """
 
     def is_wall(c: tuple[int, int]) -> bool:
+        # Flanking walls must be REAL in-bounds wall cells: runs in the
+        # outside margin (flanked by the grid edge) are not door gaps.
         x, y = c
-        if not (0 <= x < width and 0 <= y < height):
-            return True
-        return c in walls
+        return (0 <= x < width and 0 <= y < height) and c in walls
 
     def is_passable(c: tuple[int, int]) -> bool:
         x, y = c
         if not (0 <= x < width and 0 <= y < height):
-            return True
+            return True  # outside the plan is passable for exit detection
         return c in floor
 
     groups: list[list[tuple[int, int, str]]] = []
@@ -272,6 +272,25 @@ def analyze(
     def in_bounds(c: tuple[int, int]) -> bool:
         return 0 <= c[0] < width and 0 <= c[1] < height
 
+    # ---- the exterior: floor reachable from the image border -----------------
+    # Plans are auto-cropped with a small pad, so the envelope wall rarely sits
+    # on the grid edge: a door to the outside leads to the floor MARGIN ring,
+    # not to out-of-bounds. The exterior is therefore the flood region from all
+    # boundary floor cells with every candidate gap removed.
+    all_cand_cells = {(x, y) for g in groups for x, y, _ in g}
+    boundary_floor = {
+        c for c in floor - all_cand_cells if c[0] in (0, width - 1) or c[1] in (0, height - 1)
+    }
+    exterior_flood = set(boundary_floor)
+    stack = list(boundary_floor)
+    while stack:
+        x, y = stack.pop()
+        for dx, dy in NEIGHBORS_4:
+            nxt = (x + dx, y + dy)
+            if nxt in floor and nxt not in all_cand_cells and nxt not in exterior_flood:
+                exterior_flood.add(nxt)
+                stack.append(nxt)
+
     for group in groups:
         if not has_wall_continuation(group):
             continue
@@ -292,9 +311,12 @@ def analyze(
         b_out = any(not in_bounds(c) for c in side_b)
         side_a_in = {c for c in side_a if in_bounds(c)}
         side_b_in = {c for c in side_b if in_bounds(c)}
+        # A side is EXTERIOR when it leaves the grid or reaches the outside
+        # flood region (the margin ring around the envelope).
+        a_ext = a_out or bool(side_a_in & exterior_flood)
+        b_ext = b_out or bool(side_b_in & exterior_flood)
 
-        if a_out or b_out:
-            # The opening leads off the plan: an exterior door = an EXIT.
+        if a_ext != b_ext:  # exactly one side is outside: an exterior door
             mid = group[len(group) // 2]
             width_m = len(group) * cell_size_m
             capacity = max(0.75, round(width_m * 1.3 * 4) / 4)
@@ -308,6 +330,9 @@ def analyze(
             )
             door_cells |= cells
             result.doors += 1
+        elif a_ext and b_ext:
+            # Passage between two outside areas: not part of the building.
+            interior_openings += 1
         elif side_a_in and side_b_in:
             # A gap whose removal separates the two sides is a door/channel:
             # evacuation-wise it stays a passable connection either way.
@@ -324,24 +349,19 @@ def analyze(
     regions: dict[int, list[tuple[int, int]]] = {}
     for cell, label in room_labels.items():
         regions.setdefault(label, []).append(cell)
-    biggest_region = max(regions, key=lambda lbl: len(regions[lbl])) if regions else None
 
-    def in_outer_margin(cells: list[tuple[int, int]]) -> bool:
-        """True when every cell lies within the 2-cell crop margin at the
-        grid edge — that ring is the plan's outside, never a room."""
-        return all(
-            c[0] < 2 or c[1] < 2 or c[0] >= width - 2 or c[1] >= height - 2
-            for c in cells
-        )
+    # Regions containing exterior-flood cells are the plan's outside (the
+    # margin ring around the envelope); everything else is interior.
+    exterior_regions = {
+        label
+        for label, cells in regions.items()
+        if any(c in exterior_flood for c in cells)
+    }
 
     room_cells: dict[int, list[tuple[int, int]]] = {}
     for label, cells in regions.items():
-        on_boundary = any(
-            c[0] in (0, width - 1) or c[1] in (0, height - 1) for c in cells
-        )
-        is_exterior = on_boundary and label != biggest_region
-        if is_exterior or (on_boundary and in_outer_margin(cells)):
-            continue  # exterior ring
+        if label in exterior_regions:
+            continue
         room_cells[label] = cells
 
     sized = sorted(room_cells.values(), key=len, reverse=True)

@@ -51,6 +51,31 @@ class TestAutoDetection:
         pops = result.zone_populations
         assert len(pops) == 2 and all(v > 0 for v in pops.values())
 
+    def test_exit_with_margin_ring_detected(self):
+        """Regression: when the plan's envelope is inset from the grid edge
+        (auto-crop pad), a door to the outside leads to the floor margin ring,
+        NOT out-of-bounds. The exit must still be detected."""
+        walls = walls_from_ascii(
+            [
+                "............",
+                "............",
+                "############",
+                "#..........#",
+                "#..........#",
+                "#..........#",
+                "####..######",  # door gap pierces the envelope
+                "............",
+                "............",
+            ]
+        )
+        # The gap cells (4,6),(5,6) lead from the interior to the margin ring
+        # (floor rows 0-1 and 7-8, touching the grid edge) — the same
+        # geometry auto-crop produces for real uploaded plans.
+        result = analyze(walls, 12, 9, cell_size_m=0.5, occupancy_density=0.25)
+        assert len(result.exits) == 1, f"expected exit through margin ring, got {result.exits}"
+        assert len(result.zones) == 1
+        assert result.zone_populations and all(v > 0 for v in result.zone_populations.values())
+
     def test_one_cell_interior_door_detected(self):
         walls = walls_from_ascii(
             [

@@ -203,6 +203,31 @@ User report: uploaded plans were not recognized faithfully. Fixes and tools:
 
 Tests: **121 backend** (+3 fidelity/Otsu), 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 8: exterior-ring exit fix
+
+User report: exits were not being marked for uploaded plans. Root cause: the
+exit classifier required a candidate opening to lead OUT OF BOUNDS, but
+auto-crop insets the plan with a 2-cell pad — a door to the outside leads to
+the floor MARGIN ring, not off-grid, so exterior doors were misclassified as
+interior doors and no exits were placed. Fixes:
+
+1. **Exterior flood region** — computed once per plan: the floor cells
+   reachable from the image border with all candidate gaps removed (the
+   margin ring around the envelope).
+2. **Exit rule** — an opening with exactly one side in the exterior flood is
+   an exit; both sides → outside passage (ignored); neither → interior door
+   by the separation flood test.
+3. **Margin candidates rejected** — floor runs flanked by the grid edge
+   (outside the envelope) are not door gaps; flanking walls must be real
+   in-bounds cells.
+4. **Zone exterior rule simplified** — regions containing exterior-flood
+   cells are the outside; heuristics (largest-region, margin-band) removed.
+
+Regression test added: envelope inset from the grid edge with a margin ring
+→ exit detected through the ring. Verified live: sample plan → 3 exits →
+one-click run marks all 3 in the simulation's exit-utilization table.
+Tests: **122 backend**, lint clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,
