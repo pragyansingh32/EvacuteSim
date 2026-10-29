@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import base64
-import io
 import zlib
 from urllib.parse import quote
 
 import pytest
-
 from app.planimport import ImportParams, import_from_drawio
 
 ROOM_PLAN = """<mxfile host="app.diagrams.net">
@@ -17,16 +15,16 @@ ROOM_PLAN = """<mxfile host="app.diagrams.net">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="room" value="Main hall" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
+        <mxCell id="room" value="Main hall" style="rounded=0;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="40" y="40" width="240" height="160" as="geometry"/>
         </mxCell>
-        <mxCell id="innerWall" style="edgeStyle=none;html=1;" edge="1" parent="1">
+        <mxCell id="innerWall" style="edgeStyle=none;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="160" y="40" as="sourcePoint"/>
             <mxPoint x="160" y="120" as="targetPoint"/>
           </mxGeometry>
         </mxCell>
-        <mxCell id="label" value="Note text" style="text;html=1;" vertex="1" parent="1">
+        <mxCell id="label" value="Note text" style="text;" vertex="1" parent="1">
           <mxGeometry x="60" y="60" width="60" height="20" as="geometry"/>
         </mxCell>
       </root>
@@ -86,7 +84,7 @@ class TestDrawioImport:
     def test_filled_shape_becomes_solid_block(self):
         plan = ROOM_PLAN.replace(
             '</root>',
-            """<mxCell id="pillar" style="rounded=0;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+            """<mxCell id="pillar" style="rounded=0;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
           <mxGeometry x="80" y="80" width="40" height="40" as="geometry"/>
         </mxCell>
       </root>""",
@@ -107,17 +105,31 @@ class TestDrawioImport:
         result = import_from_drawio(wrapped.encode(), ImportParams(target_width=48, real_width_m=12.0), "Compressed")
         assert len(result.draft.walls) > 20
 
+    def test_compressed_full_file_with_trailing_tags(self):
+        """Real exports: the compressed payload sits inside <diagram> and the
+        file has trailing markup after </mxGraphModel> — extraction must
+        tolerate it (the model is found, not parsed as one document)."""
+        model = ROOM_PLAN[ROOM_PLAN.index("<mxGraphModel"):]
+        model = model[: model.rindex("</mxGraphModel>") + len("</mxGraphModel>")]
+        compressed = compress_diagram(model)
+        wrapped = f'<mxfile><diagram name="p">{compressed}</diagram></mxfile>'
+        result = import_from_drawio(
+            wrapped.encode(), ImportParams(target_width=48, real_width_m=12.0), "Compressed full"
+        )
+        assert len(result.draft.walls) > 20
+
     def test_empty_diagram_rejected(self):
+        empty = (
+            b'<mxfile><diagram name="p"><mxGraphModel><root>'
+            b'<mxCell id="0"/></root></mxGraphModel></diagram></mxfile>'
+        )
         with pytest.raises(ValueError, match="No shapes"):
-            import_from_drawio(
-                b'<mxfile><diagram name="p"><mxGraphModel><root><mxCell id="0"/></root></mxGraphModel></diagram></mxfile>',
-                ImportParams(target_width=48, real_width_m=12.0),
-                "empty",
-            )
+            import_from_drawio(empty, ImportParams(target_width=48, real_width_m=12.0), "empty")
 
     def test_non_drawio_rejected(self):
+        not_a_diagram = b"<html><body>not a diagram</body></html>"
         with pytest.raises(ValueError, match="draw.io"):
-            import_from_drawio(b"<html><body>not a diagram</body></html>", ImportParams(target_width=48, real_width_m=12.0), "x")
+            import_from_drawio(not_a_diagram, ImportParams(target_width=48, real_width_m=12.0), "x")
 
 
 class TestDrawioEndpoint:
@@ -139,31 +151,31 @@ class TestDrawioEndpoint:
         bottom wall (the way users draw plans in draw.io)."""
         plan = """<mxfile><diagram name="p"><mxGraphModel><root>
             <mxCell id="0"/><mxCell id="1" parent="0"/>
-            <mxCell id="top" style="edgeStyle=none;html=1;" edge="1" parent="1">
+            <mxCell id="top" style="edgeStyle=none;" edge="1" parent="1">
               <mxGeometry relative="1" as="geometry">
                 <mxPoint x="40" y="40" as="sourcePoint"/>
                 <mxPoint x="280" y="40" as="targetPoint"/>
               </mxGeometry>
             </mxCell>
-            <mxCell id="left" style="edgeStyle=none;html=1;" edge="1" parent="1">
+            <mxCell id="left" style="edgeStyle=none;" edge="1" parent="1">
               <mxGeometry relative="1" as="geometry">
                 <mxPoint x="40" y="40" as="sourcePoint"/>
                 <mxPoint x="40" y="200" as="targetPoint"/>
               </mxGeometry>
             </mxCell>
-            <mxCell id="right" style="edgeStyle=none;html=1;" edge="1" parent="1">
+            <mxCell id="right" style="edgeStyle=none;" edge="1" parent="1">
               <mxGeometry relative="1" as="geometry">
                 <mxPoint x="280" y="40" as="sourcePoint"/>
                 <mxPoint x="280" y="200" as="targetPoint"/>
               </mxGeometry>
             </mxCell>
-            <mxCell id="bottomA" style="edgeStyle=none;html=1;" edge="1" parent="1">
+            <mxCell id="bottomA" style="edgeStyle=none;" edge="1" parent="1">
               <mxGeometry relative="1" as="geometry">
                 <mxPoint x="40" y="200" as="sourcePoint"/>
                 <mxPoint x="150" y="200" as="targetPoint"/>
               </mxGeometry>
             </mxCell>
-            <mxCell id="bottomB" style="edgeStyle=none;html=1;" edge="1" parent="1">
+            <mxCell id="bottomB" style="edgeStyle=none;" edge="1" parent="1">
               <mxGeometry relative="1" as="geometry">
                 <mxPoint x="190" y="200" as="sourcePoint"/>
                 <mxPoint x="280" y="200" as="targetPoint"/>
@@ -193,7 +205,6 @@ class TestDrawioEndpoint:
         )
         assert building.status_code == 201, building.text
         zones = {z["id"]: len(z["cells"]) for z in building.json()["zones"]}
-        total_pop = max(4, sum(zones.values()) // 4)
         per_zone = {z: max(1, n // 4) for z, n in zones.items()}
         scenario = client.post(
             "/api/v1/scenarios",
@@ -218,6 +229,10 @@ class TestDrawioEndpoint:
         assert run.status_code == 201, run.text
         body = run.json()["run"]
         assert body["status"] == "completed"
-        assert body["metrics"]["evacuated_count"] + body["metrics"]["unreachable_count"] + body["metrics"]["remaining_count"] == body["metrics"]["total_occupants"]
+        m = body["metrics"]
+        assert (
+            m["evacuated_count"] + m["unreachable_count"] + m["remaining_count"]
+            == m["total_occupants"]
+        )
 
 

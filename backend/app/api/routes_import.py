@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 from app.api.deps import DbSession  # noqa: F401 - reserved for future persistence
 from app.core.config import settings
 from app.core.errors import ValidationError
-from app.planimport import ImportParams, import_from_dxf, import_from_drawio, import_from_image
+from app.planimport import ImportParams, import_from_drawio, import_from_dxf, import_from_image
 
 router = APIRouter(prefix="/import", tags=["import"])
 

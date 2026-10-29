@@ -262,6 +262,30 @@ now rounds DOWN to satisfy the dt ≤ cell/max-speed validation.
 Tests: **131 backend** (+9 drawio, +1 margin-ring regression), 4 frontend;
 lint and tsc clean.
 
+## Post-delivery enhancement 10: draw.io verification pass
+
+Dedicated verification of the draw.io pipeline on request ("do the test and
+make the system run it properly"):
+
+- **10 draw.io tests** (unit + endpoint): outline/line rasterization,
+  semantics detection, door gaps, filled-shape solid blocks, compressed
+  payload (including full-file extraction with trailing markup), empty and
+  non-drawio rejection, upload endpoint, and the complete pipeline
+  (diagram → building → scenario → completed evacuation with mass balance).
+- **Live server checks**: valid drawio → preview/building/run (81/81
+  evacuated, both exits marked in the utilization table); compressed
+  payload; unsupported-type and empty-diagram rejections with clear 422
+  messages; exit capacities derived from door widths (4.0 / 3.0 p/s).
+- **Browser E2E**: .drawio uploaded through the UI file input → convert →
+  auto-detected 2 exits / 3 zones / 6 doors → Convert & run → run page
+  shows 81/81 evacuated with both exits marked. One live-check failure
+  during this pass was traced to the test script's own XML extraction
+  (trailing </mxfile> included in the compressed payload), not the system;
+  a regression test with correct extraction was added.
+- Lint cleaned across the drawio test module.
+
+Tests: **132 backend**, 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,
