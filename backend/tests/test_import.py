@@ -161,6 +161,39 @@ class TestDxfImport:
         assert result.stats["segments_imported"] == 4
 
 
+class TestFidelity:
+    def test_otsu_separates_bimodal_histogram(self):
+        from app.planimport.image_import import otsu_threshold
+
+        histogram = [0] * 256
+        histogram[20] = 1000   # wall ink
+        histogram[245] = 9000  # paper
+        threshold = otsu_threshold(histogram)
+        assert 20 < threshold < 245
+
+    def test_ink_capture_and_crop_box_reported(self):
+        result = import_from_image(
+            make_plan_png(), ImportParams(target_width=30, real_width_m=15.0), "fidelity"
+        )
+        stats = result.stats
+        assert stats["threshold_auto"] is True
+        assert 0 < stats["threshold"] < 255
+        assert 0.0 <= stats["ink_captured_pct"] <= 100.0
+        assert stats["ink_captured_pct"] > 70.0
+        assert len(stats["crop_box"]) == 4
+        assert stats["crop_box"][2] - stats["crop_box"][0] > 0
+
+    def test_manual_threshold_still_supported(self):
+        result = import_from_image(
+            make_plan_png(),
+            ImportParams(target_width=30, real_width_m=15.0, threshold=128),
+            "manual",
+        )
+        assert result.stats["threshold_auto"] is False
+        assert result.stats["threshold"] == 128
+        assert len(result.draft.walls) > 10
+
+
 class TestImportEndpoint:
     def test_preview_converts_uploaded_png(self, client):
         resp = client.post(

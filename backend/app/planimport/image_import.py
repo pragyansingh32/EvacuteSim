@@ -2,18 +2,20 @@
 
 Algorithm (deliberately simple and explainable):
 
-1. Decode the image with Pillow, convert to 8-bit grayscale, and binarize at
-   FULL resolution (dark vs light at the threshold) — binarizing first
-   preserves thin wall lines that mean-based downscaling would erase.
-2. Downscale the binary image to the target grid with a BOX filter, so every
-   output pixel is the fraction of dark pixels in that cell's area.
-3. A cell becomes a wall when at least WALL_PIXEL_DENSITY of its pixels are
-   wall-colored (dark for typical plans, bright when `invert` is set for
-   light-on-dark plans).
+1. Decode the image with Pillow, convert to 8-bit grayscale, and pick the
+   ink/paper threshold — either the user's value or automatically via Otsu's
+   method (maximizes between-class variance in the grayscale histogram).
+2. Binarize at FULL resolution (keeps thin wall lines that mean-based
+   downscaling would erase), then crop to the drawn content (removes scanner
+   margins that would become phantom floor rings).
+3. Box-filter the binary image to the target grid: every output pixel is the
+   EXACT fraction of ink in that cell's source area.
+4. A cell is a wall when at least `wall_density` of its pixels are ink (dark
+   for typical plans; inverted for light-on-dark plans).
 
-This is a raster approximation: text, hatching, furniture, and scan noise
-convert to wall cells too. The result is a draft for manual cleanup, not a
-verified model. See docs/KNOWN_LIMITATIONS.md.
+Fidelity is reported: `ink_captured_pct` says what fraction of the plan's ink
+landed inside detected wall cells, and `crop_box` lets the UI overlay the
+converted grid on the original image for visual verification.
 """
 
 from __future__ import annotations
@@ -23,10 +25,35 @@ import io
 from app.core.config import settings
 from app.planimport.common import ImportParams, ImportResult, finish_grid
 
-# Fraction of a cell's pixels that must be wall-colored to count as wall.
-# Lower values keep thinner lines but admit more noise; the editor is the
-# place to clean the remainder.
-WALL_PIXEL_DENSITY = 0.3
+
+def otsu_threshold(histogram: list[int]) -> int:
+    """Otsu 1979: the threshold maximizing between-class variance — the
+    standard automatic ink/paper separator for scanned plans."""
+    total = sum(histogram)
+    if total == 0:
+        return 128
+    sum_all = sum(i * h for i, h in enumerate(histogram))
+    sum_b = 0
+    weight_b = 0
+    best_threshold = 128
+    best_variance = -1.0
+    for t in range(256):
+        weight_b += histogram[t]
+        if weight_b == 0:
+            continue
+        weight_f = total - weight_b
+        if weight_f == 0:
+            break
+        sum_b += t * histogram[t]
+        mean_b = sum_b / weight_b
+        mean_f = (sum_all - sum_b) / weight_f
+        variance = weight_b * weight_f * (mean_b - mean_f) ** 2
+        if variance > best_variance:
+            best_variance = variance
+            best_threshold = t
+    # `best_threshold` is the last dark-class bin; the binary cut is strict
+    # (v < threshold), so advance past it to include the dark class itself.
+    return min(255, best_threshold + 1)
 
 
 def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportResult:
@@ -52,14 +79,19 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
 
     grayscale = image.convert("L")
 
-    # Binarize at full resolution first (keeps thin wall lines that mean-based
-    # downscaling would erase).
-    binary = grayscale.point(lambda v: 0 if v < params.threshold else 255)
+    # Threshold: user-provided, or automatic via Otsu's method.
+    if params.threshold is None:
+        threshold = otsu_threshold(grayscale.histogram())
+    else:
+        threshold = params.threshold
 
-    # Crop to the drawn content: plans scanned with white margins would
-    # otherwise convert the margin into a phantom floor ring OUTSIDE the
-    # building envelope, detaching any exit placed there from the interior.
+    # Binarize at full resolution first (keeps thin wall lines).
+    binary = grayscale.point(lambda v: 0 if v < threshold else 255)
+
+    # Crop to the drawn content: scanner margins would otherwise become a
+    # phantom floor ring outside the building envelope.
     content_bbox = binary.point(lambda v: 255 - v).getbbox()
+    crop_box = [0, 0, src_w, src_h]
     if content_bbox is not None:
         pad = 2
         left = max(0, content_bbox[0] - pad)
@@ -68,6 +100,7 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
         bottom = min(binary.height, content_bbox[3] + pad)
         if (right - left) >= 8 and (bottom - top) >= 8:
             binary = binary.crop((left, top, right, bottom))
+            crop_box = [left, top, right, bottom]
             src_w, src_h = binary.size
 
     # Fit the plan into the grid: the larger dimension maps to target_width
@@ -81,30 +114,41 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
     grid_w = min(grid_w, settings.max_grid_width)
     grid_h = min(grid_h, settings.max_grid_height)
 
-    # Box-filter the binary image: each output pixel is the fraction of dark
-    # pixels in that cell's area.
+    # Box-filter the binary image: each output pixel is the exact fraction of
+    # ink in that cell's source area (0 = empty, 255 = fully inked).
     small = binary.resize((grid_w, grid_h), Image.BOX)
-    pixels = small.tobytes()  # 0 = fully dark cell, 255 = fully light cell
+    pixels = small.tobytes()
 
-    dark_cutoff = 255 * (1.0 - WALL_PIXEL_DENSITY)
-    bright_cutoff = 255 * WALL_PIXEL_DENSITY
+    dark_cutoff = 255 * (1.0 - params.wall_density)
+    bright_cutoff = 255 * params.wall_density
     walls: set[tuple[int, int]] = set()
+    total_ink = 0
+    captured_ink = 0
     for y in range(grid_h):
         for x in range(grid_w):
             lum = pixels[y * grid_w + x]
+            ink = 255 - lum
+            total_ink += ink
             if params.invert:
                 is_wall = lum >= bright_cutoff  # light walls on dark plan
             else:
                 is_wall = lum <= dark_cutoff  # dark walls on light plan
             if is_wall:
                 walls.add((x, y))
+                captured_ink += ink
 
     semantics = None
     if params.interpret:
         from app.planimport.semantics import analyze
 
-        semantics = analyze(walls, grid_w, grid_h, cell_size_m=round(
-            params.real_width_m / params.target_width, 3), occupancy_density=params.occupancy_density)
+        cell_size = round(params.real_width_m / params.target_width, 3)
+        semantics = analyze(
+            walls,
+            grid_w,
+            grid_h,
+            cell_size_m=cell_size,
+            occupancy_density=params.occupancy_density,
+        )
 
     return finish_grid(
         walls,
@@ -115,8 +159,12 @@ def import_from_image(data: bytes, params: ImportParams, name: str) -> ImportRes
         source_stats={
             "source_type": "image",
             "source_pixels": [src_w, src_h],
-            "threshold": params.threshold,
+            "threshold": threshold,
+            "threshold_auto": params.threshold is None,
+            "wall_density": params.wall_density,
             "invert": params.invert,
+            "crop_box": crop_box,
+            "ink_captured_pct": round(100.0 * captured_ink / total_ink, 1) if total_ink else 0.0,
         },
         semantics=semantics,
     )

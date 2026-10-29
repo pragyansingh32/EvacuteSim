@@ -18,10 +18,11 @@ class ImportParams:
 
     target_width: int = 60
     real_width_m: float = 15.0
-    threshold: int = 128
+    threshold: int | None = None  # None = automatic (Otsu)
     invert: bool = False
     interpret: bool = True
     occupancy_density: float = 0.25  # persons per square metre of zone area
+    wall_density: float = 0.3  # fraction of a cell's pixels that must be ink
 
     def validated(self) -> "ImportParams":
         from app.core.config import settings
@@ -32,8 +33,10 @@ class ImportParams:
             )
         if not (1.0 <= self.real_width_m <= 500.0):
             raise ValueError("Real plan width must be between 1 and 500 metres.")
-        if not (0 <= self.threshold <= 255):
+        if self.threshold is not None and not (0 <= self.threshold <= 255):
             raise ValueError("Threshold must be between 0 and 255.")
+        if not (0.05 <= self.wall_density <= 0.9):
+            raise ValueError("Wall density must be between 0.05 and 0.9.")
         if not (0.02 <= self.occupancy_density <= 2.0):
             raise ValueError("Occupancy density must be between 0.02 and 2.0 persons/m2.")
         return self

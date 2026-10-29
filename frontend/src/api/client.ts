@@ -98,15 +98,23 @@ export const api = {
   // plan import
   previewImportPlan: (
     file: File,
-    params: { name: string; target_width: number; real_width_m: number; threshold: number; invert: boolean },
+    params: {
+      name: string
+      target_width: number
+      real_width_m: number
+      threshold?: number | null
+      invert: boolean
+      wall_density?: number
+    },
   ) => {
     const form = new FormData()
     form.append('file', file)
     form.append('name', params.name)
     form.append('target_width', String(params.target_width))
     form.append('real_width_m', String(params.real_width_m))
-    form.append('threshold', String(params.threshold))
+    if (params.threshold != null) form.append('threshold', String(params.threshold))
     form.append('invert', String(params.invert))
+    if (params.wall_density != null) form.append('wall_density', String(params.wall_density))
     return request<ImportPreviewResponse>('/import/preview', { method: 'POST', body: form })
   },
 
@@ -159,6 +167,11 @@ export interface ImportPreviewResponse {
     grid: [number, number]
     cell_size_m: number
     source_pixels?: [number, number]
+    threshold?: number
+    threshold_auto?: boolean
+    wall_density?: number
+    crop_box?: [number, number, number, number]
+    ink_captured_pct?: number
     segments_imported?: number
     entities_seen?: number
     semantics?: {

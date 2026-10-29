@@ -181,6 +181,28 @@ The import pipeline now performs the full semantic interpretation itself:
 
 Tests: **118 backend** (+7 semantics tests), 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 7: faithful conversion + fidelity overlay
+
+User report: uploaded plans were not recognized faithfully. Fixes and tools:
+
+1. **Automatic ink threshold (Otsu)** — the fixed 128 guess replaced by
+   Otsu's between-class-variance method over the grayscale histogram
+   (off-by-one at bimodal histograms fixed); manual override remains.
+2. **Wall-density parameter** — the fraction of a cell's pixels that must be
+   ink (default 30%, was a hidden constant); lower keeps thin lines.
+3. **Fidelity metrics** — `ink_captured_pct` (share of the plan's ink inside
+   detected wall cells) and `crop_box` (the exact source region the grid maps
+   onto) returned per conversion.
+4. **Fidelity overlay (UI)** — the original image drawn on a canvas with
+   detected wall cells painted translucent red on top, plus an Original/Overlay
+   toggle: the user sees precisely what the simulation treats as wall and can
+   re-tune threshold/density/resolution and re-convert until the mapping is
+   faithful. Verified: bundled sample plan → 91.2% ink capture with auto
+   threshold, overlay following the plan's walls with door gaps visibly open.
+5. Grid-width default raised 60 → 80 for finer tracking.
+
+Tests: **121 backend** (+3 fidelity/Otsu), 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

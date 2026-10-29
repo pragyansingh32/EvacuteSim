@@ -30,10 +30,11 @@ async def preview_import(
     name: str = Form(default="Imported plan"),
     target_width: int = Form(default=60),
     real_width_m: float = Form(default=15.0),
-    threshold: int = Form(default=128),
+    threshold: int | None = Form(default=None),
     invert: bool = Form(default=False),
     interpret: bool = Form(default=True),
     occupancy_density: float = Form(default=0.25),
+    wall_density: float = Form(default=0.3),
 ) -> dict:
     """Convert an uploaded plan (image or ASCII DXF) into a grid draft.
 
@@ -64,6 +65,7 @@ async def preview_import(
         invert=invert,
         interpret=interpret,
         occupancy_density=occupancy_density,
+        wall_density=wall_density,
     )
 
     safe_name = (name or "Imported plan").strip()[:200]

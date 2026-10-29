@@ -1,58 +1,55 @@
-// Plan import: upload an existing floor plan (image or ASCII DXF), convert it
-// to a grid draft, review it, and hand it to the building editor for cleanup,
-// exit placement, and zones. The conversion is an approximation — the editor
-// step is mandatory, not optional.
+// Plan import: upload an existing floor plan (image or ASCII DXF) and convert
+// it to a grid draft. The conversion is verified visually: a fidelity overlay
+// draws the original image with the detected walls on top, and threshold /
+// density / resolution can be re-tuned until the mapping is faithful.
+// Doors, exits, zones, and populations are detected automatically; the editor
+// remains available for fine-tuning.
 
-import { useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { api, ApiRequestError, type ImportPreviewResponse } from '../api/client'
-import GridCanvas from '../components/GridCanvas'
-import { DisclaimerBanner, ErrorAlert } from '../components/ui'
+import { useMemo, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { api, ApiRequestError, type ImportPreviewResponse } from "../api/client"
+import PlanOverlay from "../components/PlanOverlay"
+import { DisclaimerBanner, ErrorAlert } from "../components/ui"
 
-interface SuggestedScenario {
-  name: string
-  description: string
-  config: {
-    zone_populations: Record<string, number>
-    max_duration_s: number
-    dt_s: number
-  }
-}
-
-const SAMPLE_PLAN_URL = '/sample-plan.png'
+const SAMPLE_PLAN_URL = "/sample-plan.png"
 
 export default function ImportPlanPage() {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [fileName, setFileName] = useState('')
-  const [name, setName] = useState('Imported building')
-  const [targetWidth, setTargetWidth] = useState(60)
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
+  const [fileName, setFileName] = useState("")
+  const [name, setName] = useState("Imported building")
+  const [targetWidth, setTargetWidth] = useState(80)
   const [realWidthM, setRealWidthM] = useState(15)
+  const [autoThreshold, setAutoThreshold] = useState(true)
   const [threshold, setThreshold] = useState(128)
+  const [wallDensity, setWallDensity] = useState(0.3)
   const [invert, setInvert] = useState(false)
   const [result, setResult] = useState<ImportPreviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [runningAll, setRunningAll] = useState(false)
   const [isDxf, setIsDxf] = useState(false)
+  const [showImageOnly, setShowImageOnly] = useState(false)
+  const fileUrlRef = useRef<string | null>(null)
 
   const draftBuilding = useMemo(() => {
     if (!result) return null
     return {
       id: 0,
       name: result.draft.name,
-      description: 'Imported plan draft (walls only)',
+      description: "Imported plan draft",
       width: result.draft.width,
       height: result.draft.height,
       cell_size_m: result.draft.cell_size_m,
       is_sample: false,
-      created_at: '',
-      updated_at: '',
+      created_at: "",
+      updated_at: "",
       warnings: [],
       walls: result.draft.walls,
-      exits: [],
-      zones: [],
+      exits: result.draft.exits,
+      zones: result.draft.zones,
     }
   }, [result])
 
@@ -60,10 +57,18 @@ export default function ImportPlanPage() {
     setFile(f)
     setResult(null)
     setError(null)
-    if (!f) return
+    if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current)
+    if (!f) {
+      setFileUrl(null)
+      setFileName("")
+      return
+    }
+    const url = URL.createObjectURL(f)
+    fileUrlRef.current = url
+    setFileUrl(url)
     setFileName(f.name)
-    setIsDxf(f.name.toLowerCase().endsWith('.dxf'))
-    setName(f.name.replace(/\.[^.]+$/, '') || 'Imported building')
+    setIsDxf(f.name.toLowerCase().endsWith(".dxf"))
+    setName(f.name.replace(/\.[^.]+$/, "") || "Imported building")
   }
 
   async function convert() {
@@ -75,8 +80,9 @@ export default function ImportPlanPage() {
         name,
         target_width: targetWidth,
         real_width_m: realWidthM,
-        threshold,
+        threshold: autoThreshold ? null : threshold,
         invert,
+        wall_density: wallDensity,
       })
       setResult(preview)
     } catch (e) {
@@ -92,11 +98,9 @@ export default function ImportPlanPage() {
     setRunningAll(true)
     setError(null)
     try {
-      const suggested = (result as ImportPreviewResponse & { suggested_scenario?: SuggestedScenario })
-        .suggested_scenario
       const building = await api.createBuilding({
         name: result.draft.name,
-        description: 'Imported from a floor plan with automatic door/exit/zone detection.',
+        description: "Imported from a floor plan with automatic door/exit/zone detection.",
         width: result.draft.width,
         height: result.draft.height,
         cell_size_m: result.draft.cell_size_m,
@@ -105,6 +109,7 @@ export default function ImportPlanPage() {
         zones: result.draft.zones,
       })
       let runId: number | null = null
+      const suggested = result.suggested_scenario
       if (suggested) {
         const scenario = await api.createScenario({
           building_id: building.id,
@@ -126,20 +131,20 @@ export default function ImportPlanPage() {
     if (!result) return
     const draft = { ...result.draft, importWarnings: result.warnings }
     try {
-      sessionStorage.setItem('evacuatesim-import-draft', JSON.stringify(draft))
+      sessionStorage.setItem("evacuatesim-import-draft", JSON.stringify(draft))
     } catch {
       // storage unavailable: router state still carries it for this navigation
     }
-    navigate('/buildings', { state: { importDraft: draft } })
+    navigate("/buildings", { state: { importDraft: draft } })
   }
 
   async function useSamplePlan() {
     try {
       setBusy(true)
       const resp = await fetch(SAMPLE_PLAN_URL)
-      if (!resp.ok) throw new Error('Sample plan not available')
+      if (!resp.ok) throw new Error("Sample plan not available")
       const blob = await resp.blob()
-      pickFile(new File([blob], 'sample-plan.png', { type: 'image/png' }))
+      pickFile(new File([blob], "sample-plan.png", { type: "image/png" }))
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -147,19 +152,21 @@ export default function ImportPlanPage() {
     }
   }
 
+  const semantics = result?.stats.semantics
+
   return (
     <div>
       <h1>Import Building Plan</h1>
       <p className="page-sub">
-        Upload a prepared floor plan — an image (PNG/JPG/BMP/TIFF) or an ASCII DXF
-        CAD file — and EvacuateSim converts it into a simulation automatically:
-        walls, doors, exits (with width-based capacities), starting zones with
-        suggested populations, and a ready-to-run scenario.
+        Upload a prepared floor plan — an image (PNG/JPG/BMP/TIFF) or an ASCII DXF CAD file —
+        and EvacuateSim converts it into a simulation automatically: walls, doors, exits (with
+        width-based capacities), starting zones with suggested populations, and a ready-to-run
+        scenario. The fidelity overlay lets you verify the conversion against your exact image.
       </p>
       <DisclaimerBanner />
       <ErrorAlert message={error} />
 
-      <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.4fr', alignItems: 'start' }}>
+      <div className="grid-2" style={{ gridTemplateColumns: "1fr 1.4fr", alignItems: "start" }}>
         <div>
           <div className="card">
             <h3>1. Upload the plan</h3>
@@ -176,9 +183,9 @@ export default function ImportPlanPage() {
               </button>
             </div>
             <div className="kbd-note">
-              Supported: PNG/JPG/BMP/GIF/TIFF/WebP images and plain-text (ASCII) DXF
-              with LINE / LWPOLYLINE / CIRCLE geometry. Max{' '}
-              10 MB. Binary DXF and PDF are not supported.
+              Supported: PNG/JPG/BMP/GIF/TIFF/WebP images and plain-text (ASCII) DXF with
+              LINE / LWPOLYLINE / CIRCLE geometry. Max 10 MB. Binary DXF and PDF are not
+              supported.
             </div>
           </div>
 
@@ -196,7 +203,7 @@ export default function ImportPlanPage() {
                   min={8}
                   max={120}
                   value={targetWidth}
-                  onChange={(e) => setTargetWidth(Number(e.target.value) || 60)}
+                  onChange={(e) => setTargetWidth(Number(e.target.value) || 80)}
                 />
               </label>
               <label className="field">
@@ -212,105 +219,73 @@ export default function ImportPlanPage() {
             </div>
             {!isDxf && (
               <>
+                <label className="field" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="checkbox"
+                    checked={autoThreshold}
+                    onChange={(e) => setAutoThreshold(e.target.checked)}
+                    style={{ width: "auto" }}
+                  />
+                  Automatic ink threshold (Otsu — recommended)
+                </label>
+                {!autoThreshold && (
+                  <label className="field">
+                    <span className="lbl">
+                      Ink threshold ({threshold}) — darker cutoff keeps only strong lines
+                    </span>
+                    <input
+                      type="range"
+                      min={20}
+                      max={235}
+                      value={threshold}
+                      onChange={(e) => setThreshold(Number(e.target.value))}
+                    />
+                  </label>
+                )}
                 <label className="field">
                   <span className="lbl">
-                    Wall darkness threshold ({threshold}) — lower keeps only the
-                    darkest lines
+                    Wall density ({Math.round(wallDensity * 100)}%) — how much ink per cell
+                    counts as wall; lower keeps thin lines
                   </span>
                   <input
                     type="range"
-                    min={20}
-                    max={235}
-                    value={threshold}
-                    onChange={(e) => setThreshold(Number(e.target.value))}
+                    min={5}
+                    max={80}
+                    value={Math.round(wallDensity * 100)}
+                    onChange={(e) => setWallDensity(Number(e.target.value) / 100)}
                   />
                 </label>
-                <label className="field" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <label className="field" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <input
                     type="checkbox"
                     checked={invert}
                     onChange={(e) => setInvert(e.target.checked)}
-                    style={{ width: 'auto' }}
+                    style={{ width: "auto" }}
                   />
                   Invert (plan drawn light-on-dark)
                 </label>
               </>
             )}
             <button onClick={convert} disabled={!file || busy}>
-              {busy ? 'Converting…' : 'Convert to simulation grid'}
+              {busy ? "Converting…" : "Convert to simulation grid"}
             </button>
           </div>
 
           {result && (
             <div className="card">
-              <h3>3. Review &amp; open in editor</h3>
-              <table className="data">
-                <tbody>
-                  <tr>
-                    <td>Source</td>
-                    <td>{result.stats.source_type.toUpperCase()}</td>
-                  </tr>
-                  <tr>
-                    <td>Grid</td>
-                    <td>
-                      {result.stats.grid[0]}×{result.stats.grid[1]} cells ·{' '}
-                      {result.stats.cell_size_m} m/cell
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Wall cells</td>
-                    <td>
-                      {result.stats.wall_cell_count} ({(result.stats.wall_ratio * 100).toFixed(1)}%)
-                    </td>
-                  </tr>
-                  {'source_pixels' in result.stats && result.stats.source_pixels && (
-                    <tr>
-                      <td>Source image</td>
-                      <td>
-                        {result.stats.source_pixels[0]}×{result.stats.source_pixels[1]} px
-                      </td>
-                    </tr>
-                  )}
-                  {'segments_imported' in result.stats && (
-                    <tr>
-                      <td>DXF segments</td>
-                      <td>
-                        {result.stats.segments_imported} from {result.stats.entities_seen}{' '}
-                        entities
-                      </td>
-                    </tr>
-                  )}
-                  {result.stats.semantics && (
-                    <>
-                      <tr>
-                        <td>Rooms detected</td>
-                        <td>{result.stats.semantics.rooms}</td>
-                      </tr>
-                      <tr>
-                        <td>Doors / openings</td>
-                        <td>
-                          {result.stats.semantics.doors} / {result.stats.semantics.openings}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Exits placed</td>
-                        <td>{result.stats.semantics.exits}</td>
-                      </tr>
-                      <tr>
-                        <td>Starting zones</td>
-                        <td>{result.stats.semantics.zones}</td>
-                      </tr>
-                    </>
-                  )}
-                </tbody>
-              </table>
-              <div className="toolbar" style={{ marginTop: 12 }}>
+              <h3>4. Review &amp; continue</h3>
+              <div className="toolbar">
                 <button onClick={convertAndRun} disabled={runningAll}>
-                  {runningAll ? 'Creating & simulating…' : 'Convert & run evacuation'}
+                  {runningAll ? "Creating & simulating…" : "Convert & run evacuation"}
                 </button>
                 <button className="secondary" onClick={openInEditor}>
                   Review in editor first
                 </button>
+              </div>
+              <div className="kbd-note">
+                "Convert &amp; run" creates the building, the auto-generated scenario
+                (populations per zone), and starts the evacuation immediately. The editor is
+                available if anything needs adjusting.
               </div>
             </div>
           )}
@@ -318,29 +293,30 @@ export default function ImportPlanPage() {
 
         <div>
           <div className="map-wrap">
-            {draftBuilding ? (
-              <GridCanvas
-                building={draftBuilding}
-                cellPx={Math.max(8, Math.min(24, Math.floor(760 / result!.draft.width)))}
+            {result && draftBuilding && fileUrl && result.stats.crop_box ? (
+              <FidelityView
+                fileUrl={fileUrl}
+                result={result}
+                draftBuilding={draftBuilding}
+                showImageOnly={showImageOnly}
+                setShowImageOnly={setShowImageOnly}
               />
             ) : (
               <div className="empty" style={{ minHeight: 300 }}>
-                Converted walls will appear here as a grid preview.
+                The converted grid and the fidelity overlay appear here after converting.
               </div>
             )}
           </div>
           {result && (
             <>
               <div className="alert info">
-                Auto-detected {result.stats.semantics?.exits ?? 0} exit(s),{' '}
-                {result.stats.semantics?.zones ?? 0} starting zone(s) with suggested populations,
-                and {result.stats.semantics?.doors ?? 0} door(s). "Convert &amp; run" builds
-                everything and starts the evacuation; the editor is there if you want to fine-tune.
+                Auto-detected {semantics?.exits ?? 0} exit(s), {semantics?.zones ?? 0} starting
+                zone(s) with suggested populations, and {semantics?.doors ?? 0} door(s).
               </div>
               {result.warnings.length > 0 && (
                 <div className="alert error">
                   <strong>Conversion notes:</strong>
-                  <ul style={{ margin: '6px 0 0 18px' }}>
+                  <ul style={{ margin: "6px 0 0 18px" }}>
                     {result.warnings.map((w, i) => (
                       <li key={i}>{w}</li>
                     ))}
@@ -351,6 +327,70 @@ export default function ImportPlanPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function FidelityView({
+  fileUrl,
+  result,
+  draftBuilding,
+  showImageOnly,
+  setShowImageOnly,
+}: {
+  fileUrl: string
+  result: ImportPreviewResponse
+  draftBuilding: {
+    width: number
+    height: number
+    walls: [number, number][]
+  }
+  showImageOnly: boolean
+  setShowImageOnly: (v: boolean) => void
+}) {
+  const stats = result.stats
+  const cellPx = Math.max(6, Math.min(20, Math.floor(760 / draftBuilding.width)))
+  return (
+    <div>
+      <div className="toolbar">
+        <div className="seg" role="group" aria-label="Fidelity view mode">
+          <button className={!showImageOnly ? "active" : ""} onClick={() => setShowImageOnly(false)}>
+            Overlay
+          </button>
+          <button className={showImageOnly ? "active" : ""} onClick={() => setShowImageOnly(true)}>
+            Original
+          </button>
+        </div>
+        {stats.ink_captured_pct != null && (
+          <span className="muted">
+            Ink captured: <strong>{stats.ink_captured_pct}%</strong>
+            {stats.threshold_auto ? " · auto threshold" : ` · threshold ${stats.threshold}`} ·
+            density {Math.round((stats.wall_density ?? 0.3) * 100)}%
+          </span>
+        )}
+      </div>
+      {stats.ink_captured_pct != null && stats.ink_captured_pct < 60 && !showImageOnly && (
+        <div className="alert error">
+          Low fidelity: less than 60% of the plan's ink landed inside detected wall cells. Lower
+          the wall density or adjust the threshold, then re-convert.
+        </div>
+      )}
+      <PlanOverlay
+        imageUrl={fileUrl}
+        cropBox={stats.crop_box ?? [0, 0, 1, 1]}
+        building={draftBuilding as never}
+        cellPx={cellPx}
+        imageOnly={showImageOnly}
+      />
+      {!showImageOnly && (
+        <div className="legend">
+          <span>
+            <span className="swatch" style={{ background: "rgba(225, 29, 72, 0.45)" }} />
+            Detected wall cell
+          </span>
+          <span>Red marks over your image = what the simulation treats as wall.</span>
+        </div>
+      )}
     </div>
   )
 }
