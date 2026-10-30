@@ -37,9 +37,28 @@ export function MetricCard({
   )
 }
 
-export function ErrorAlert({ message }: { message: string | null }) {
+export function ErrorAlert({
+  message,
+  details,
+}: {
+  message: string | null
+  details?: { loc: (string | number)[]; msg: string }[]
+}) {
   if (!message) return null
-  return <div className="alert error">{message}</div>
+  return (
+    <div className="alert error">
+      {message}
+      {details && details.length > 0 && (
+        <ul style={{ margin: '6px 0 0 18px' }}>
+          {details.map((d, i) => (
+            <li key={i}>
+              {d.loc.join(' → ')}: {d.msg}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 export function strategyLabel(s: string): string {

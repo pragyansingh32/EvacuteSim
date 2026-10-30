@@ -57,6 +57,64 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <div className="card">
+        <h3>Quick start — how to run an evacuation</h3>
+        <div className="grid-4" style={{ fontSize: 13 }}>
+          <div>
+            <strong>1. Create or import</strong>
+            <div className="muted">Draw a building in the editor or upload a plan (draw.io / image / DXF).</div>
+          </div>
+          <div>
+            <strong>2. Create a scenario</strong>
+            <div className="muted">Pick your building, set populations per zone, choose a disaster type and intensity.</div>
+          </div>
+          <div>
+            <strong>3. Run &amp; watch</strong>
+            <div className="muted">Click "Save &amp; run" — watch the animated evacuation and see the metrics.</div>
+          </div>
+          <div>
+            <strong>4. Analyze</strong>
+            <div className="muted">Compare strategies, run disaster readiness tests, or export results.</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hero card" style={{ display: "none" }}>
+        <div className="hero-text">
+          <h1>EvacuateSim</h1>
+          <p>
+            An explainable, uncertainty-aware emergency evacuation simulation and scenario
+            optimization platform. Draw or import a building, simulate the crowd, and compare
+            routing strategies with reproducible evidence.
+          </p>
+          <div className="toolbar">
+            <Link to="/buildings">
+              <button>Create a building</button>
+            </Link>
+            <Link to="/import">
+              <button>Import an existing plan</button>
+            </Link>
+            <Link to="/library">
+              <button className="secondary">Launch a sample scenario</button>
+            </Link>
+          </div>
+        </div>
+        <div className="hero-stats">
+          <div className="stat">
+            <b>{buildings.length}</b>
+            <span>Buildings</span>
+          </div>
+          <div className="stat">
+            <b>{scenarios.length}</b>
+            <span>Scenarios</span>
+          </div>
+          <div className="stat">
+            <b>{recentRuns.length}</b>
+            <span>Recent runs</span>
+          </div>
+        </div>
+      </div>
       <DisclaimerBanner />
 
       {error && <div className="alert error">{error}</div>}

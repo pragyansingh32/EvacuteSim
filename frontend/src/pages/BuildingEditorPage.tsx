@@ -658,6 +658,18 @@ export default function BuildingEditorPage() {
         </div>
       </div>
 
+      {buildingId && (
+        <div className="card" style={{ background: "var(--accent-soft)", borderColor: "var(--accent-border)" }}>
+          <h3>Next step</h3>
+          <div className="toolbar" style={{ marginBottom: 0 }}>
+            <Link to={`/scenarios?building=${buildingId}`}>
+              <button>Create a scenario &amp; run evacuation for this building →</button>
+            </Link>
+            <span className="muted">Set populations per zone, pick a disaster type, and run.</span>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <h3>All buildings</h3>
         <div className="toolbar">

@@ -3,7 +3,7 @@
 // validated by the backend and the errors are shown verbatim.
 
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api, ApiRequestError } from '../api/client'
 import { DisclaimerBanner, ErrorAlert, strategyLabel } from '../components/ui'
 import { DISASTER_LABELS } from '../types'
@@ -28,6 +28,8 @@ const defaultConfig = (zones: { id: string }[]): ScenarioConfig => ({
 export default function ScenarioEditorPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const preselectedBuilding = searchParams.get('building')
   const [scenarioId, setScenarioId] = useState<number | null>(id ? Number(id) : null)
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([])
   const [building, setBuilding] = useState<BuildingDetail | null>(null)
@@ -39,8 +41,15 @@ export default function ScenarioEditorPage() {
   const [running, setRunning] = useState(false)
 
   useEffect(() => {
-    api.listBuildings().then(setBuildings).catch((e) => setError(e.message))
-  }, [])
+    api.listBuildings().then((rows) => {
+      setBuildings(rows)
+      // Pre-select the building from ?building=X query param
+      const target = preselectedBuilding ? Number(preselectedBuilding) : null
+      if (target && rows.some((b) => b.id === target)) {
+        selectBuilding(target)
+      }
+    }).catch((e) => setError(e.message))
+  }, [preselectedBuilding])
 
   useEffect(() => {
     if (id) {
@@ -89,7 +98,12 @@ export default function ScenarioEditorPage() {
       setInfo(`Scenario saved with id ${saved.id}.`)
       return saved.id
     } catch (e) {
-      setError(e instanceof ApiRequestError ? e.message : String(e))
+      if (e instanceof ApiRequestError) {
+        const detail = e.details?.map((d) => `${d.loc.join('.')}: ${d.msg}`).join('; ')
+        setError(detail ? `${e.message} (${detail})` : e.message)
+      } else {
+        setError(String(e))
+      }
       return null
     }
   }
@@ -102,7 +116,12 @@ export default function ScenarioEditorPage() {
       const { run } = await api.createRun({ scenario_id: sid, wait: false })
       navigate(`/runs/${run.id}`)
     } catch (e) {
-      setError(e instanceof ApiRequestError ? e.message : String(e))
+      if (e instanceof ApiRequestError) {
+        const detail = e.details?.map((d) => `${d.loc.join('.')}: ${d.msg}`).join('; ')
+        setError(detail ? `${e.message} (${detail})` : e.message)
+      } else {
+        setError(String(e))
+      }
       setRunning(false)
     }
   }
