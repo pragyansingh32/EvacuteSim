@@ -59,7 +59,7 @@ class RunMetrics(BaseModel):
     evacuated_count: int | None = None
     unreachable_count: int | None = None
     incapacitated_count: int | None = None
-    disaster: dict | None = Field(default=None)
+    disasters: list = Field(default_factory=list)
     remaining_count: int | None = None
     t50_s: float | None = None
     t90_s: float | None = None

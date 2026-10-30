@@ -210,7 +210,7 @@ def run_metrics(run: RunModel) -> dict | None:
         "evacuated_count": result.get("evacuated_count"),
         "unreachable_count": result.get("unreachable_count"),
         "incapacitated_count": result.get("incapacitated_count"),
-        "disaster": result.get("disaster") or {},
+        "disasters": result.get("disasters") or [],
         "remaining_count": result.get("remaining_count"),
         "t50_s": result.get("t50_s"),
         "t90_s": result.get("t90_s"),
