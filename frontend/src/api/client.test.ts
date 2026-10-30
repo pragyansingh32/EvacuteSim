@@ -15,6 +15,8 @@ describe('formatRunRow', () => {
         total_occupants: 10,
         evacuated_count: 10,
         unreachable_count: 0,
+        incapacitated_count: 0,
+        disaster: { type: 'none', intensity: 0 },
         remaining_count: 0,
         t50_s: 20,
         t90_s: 40,

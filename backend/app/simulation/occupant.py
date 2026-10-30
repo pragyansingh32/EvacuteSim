@@ -11,20 +11,25 @@ STATUS_AT_EXIT = "at_exit"      # standing on an exit cell, waiting to discharge
 STATUS_EVACUATED = "evacuated"  # successfully left the building
 STATUS_UNREACHABLE = "unreachable"  # no path to any exit existed at spawn
 
+STATUS_INCAPACITATED = "incapacitated"  # casualty of the modeled disaster
+
 STATUS_CODES = {
     STATUS_WAITING: 0,
     STATUS_MOVING: 1,
     STATUS_AT_EXIT: 2,
     STATUS_EVACUATED: 3,
     STATUS_UNREACHABLE: 4,
+    STATUS_INCAPACITATED: 5,
 }
 
 # Statuses of occupants still inside the building at any point in time.
 INSIDE_STATUSES = frozenset({STATUS_WAITING, STATUS_MOVING, STATUS_AT_EXIT})
 
 # Terminal statuses: the mass balance is
-# total == evacuated + unreachable + (waiting + moving + at_exit).
-TERMINAL_STATUSES = frozenset({STATUS_EVACUATED, STATUS_UNREACHABLE})
+# total == evacuated + unreachable + incapacitated + (waiting + moving + at_exit).
+TERMINAL_STATUSES = frozenset(
+    {STATUS_EVACUATED, STATUS_UNREACHABLE, STATUS_INCAPACITATED}
+)
 
 
 @dataclass

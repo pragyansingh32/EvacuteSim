@@ -111,6 +111,7 @@ def sample_hall() -> BuildingGrid:
 
 def _scenario_config(**overrides) -> dict:
     config = {
+        "disaster": {"type": "none", "intensity": 0.0, "origin_x": None, "origin_y": None},
         "zone_populations": {},
         "speed_distribution": dict(DEFAULT_SPEED),
         "pre_movement_distribution": dict(DEFAULT_PRE_MOVEMENT),
@@ -205,6 +206,39 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
                 pre_movement_distribution={"distribution": "uniform", "min": 5.0, "max": 40.0},
                 strategy="capacity_aware",
                 seed=7,
+            ),
+        },
+        {
+            "building_id": office_id,
+            "name": "Sample: Fire (severe) — dynamic disaster",
+            "description": (
+                "SYNTHETIC demonstration scenario — same office as the baseline "
+                "but a fire ignites far from the exits and spreads during the "
+                "simulation, blocking cells and forcing re-routing. "
+                "Reproducible with seed 42."
+            ),
+            "config": _scenario_config(
+                **base,
+                disaster={"type": "fire", "intensity": 0.75, "origin_x": None, "origin_y": None},
+                max_duration_s=180,
+            ),
+        },
+        {
+            "building_id": hall_id,
+            "name": "Sample: Earthquake (moderate) — dynamic disaster",
+            "description": (
+                "SYNTHETIC demonstration scenario — the assembly hall with a "
+                "moderate earthquake at ~22 s: debris blocks cells near the "
+                "exits and occupants are confused. Reproducible with seed 7."
+            ),
+            "config": _scenario_config(
+                zone_populations={"ZN": 60, "ZS": 60},
+                speed_distribution={"distribution": "normal", "mean": 1.2, "sd": 0.25, "min": 0.6, "max": 1.8},
+                pre_movement_distribution={"distribution": "uniform", "min": 5.0, "max": 30.0},
+                strategy="nearest_exit",
+                seed=7,
+                disaster={"type": "earthquake", "intensity": 0.5, "origin_x": None, "origin_y": None},
+                max_duration_s=300,
             ),
         },
     ]

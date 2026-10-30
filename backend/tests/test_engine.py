@@ -46,7 +46,10 @@ class TestBasicEvacuation:
         engine = EvacuationEngine(open_room, fast_config(population=4, seed=3))
         result = engine.run()
         assert (
-            result.evacuated_count + result.unreachable_count + result.remaining_count
+            result.evacuated_count
+            + result.unreachable_count
+            + result.incapacitated_count
+            + result.remaining_count
             == result.total_occupants
         )
 

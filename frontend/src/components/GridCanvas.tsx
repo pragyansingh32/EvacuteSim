@@ -15,8 +15,8 @@
 import { useMemo, useRef, useState } from 'react'
 import type { BuildingDetail, ExitSpec, Frame, OccupantFrameEntry } from '../types'
 
-export const STATUS_COLORS = ['#94a3b8', '#6366f1', '#f59e0b', '#10b981', '#a78bfa']
-export const STATUS_NAMES = ['Waiting', 'Moving', 'At exit', 'Evacuated', 'Unreachable']
+export const STATUS_COLORS = ['#94a3b8', '#6366f1', '#f59e0b', '#10b981', '#a78bfa', '#e11d48']
+export const STATUS_NAMES = ['Waiting', 'Moving', 'At exit', 'Evacuated', 'Unreachable', 'Incapacitated']
 
 export const ZONE_PALETTE = [
   'rgba(99, 102, 241, 0.28)',

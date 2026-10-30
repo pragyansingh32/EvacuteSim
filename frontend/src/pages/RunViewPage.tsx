@@ -19,6 +19,7 @@ import {
 import { api } from '../api/client'
 import GridCanvas, { STATUS_COLORS, STATUS_NAMES, type ExitPulse } from '../components/GridCanvas'
 import { DisclaimerBanner, ErrorAlert, MetricCard, StatusBadge, fmt, strategyLabel } from '../components/ui'
+import { DISASTER_LABELS } from '../types'
 import { useTheme } from '../theme'
 import type { BuildingDetail, RunDetail } from '../types'
 
@@ -129,12 +130,17 @@ export default function RunViewPage() {
 
   const curveData = useMemo(
     () =>
-      (run?.timeline ?? []).map(([t, evacuated, inside, atExit]) => ({
-        t: Math.round(t * 10) / 10,
-        Evacuated: evacuated,
-        Inside: inside,
-        'At exit door': atExit,
-      })),
+      (run?.timeline ?? []).map((entry) => {
+        const [t, evacuated, inside, atExit] = entry
+        const incap = entry.length > 4 ? entry[4] : 0
+        return {
+          t: Math.round(t * 10) / 10,
+          Evacuated: evacuated,
+          Inside: inside,
+          'At exit door': atExit,
+          Incapacitated: incap,
+        }
+      }),
     [run],
   )
 
@@ -221,6 +227,16 @@ export default function RunViewPage() {
             value={`${fmt(m.queue_mean_s)} s`}
             hint={m.fallback_count ? `${m.fallback_count} strategy fallbacks` : undefined}
           />
+        </div>
+      )}
+
+      {m && m.disaster && m.disaster.type !== 'none' && (
+        <div className="alert error">
+          <strong>{DISASTER_LABELS[m.disaster.type] ?? m.disaster.type} scenario</strong>
+          {" — "}intensity {Math.round((m.disaster.intensity as number) * 100)}%
+          {typeof m.disaster.cells_blocked === 'number' && `, ${m.disaster.cells_blocked} cell(s) blocked`}
+          {m.incapacitated_count ? `, ${m.incapacitated_count} incapacitated` : ""}
+          . See the Methodology page for model rules.
         </div>
       )}
 
@@ -335,6 +351,7 @@ export default function RunViewPage() {
                 <Line type="monotone" dataKey="Evacuated" stroke="#15803d" dot={false} />
                 <Line type="monotone" dataKey="Inside" stroke="#1f6feb" dot={false} />
                 <Line type="monotone" dataKey="At exit door" stroke="#b45309" dot={false} />
+                <Line type="monotone" dataKey="Incapacitated" stroke="#e11d48" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

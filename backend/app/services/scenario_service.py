@@ -33,6 +33,17 @@ def _validate_config_against_building(grid: BuildingGrid, config: dict) -> None:
         if not grid.in_bounds(x, y):
             raise ValidationError(f"Blocked cell ({x}, {y}) is outside the grid bounds.")
 
+    disaster = config.get("disaster") or {}
+    ox, oy = disaster.get("origin_x"), disaster.get("origin_y")
+    if (ox is None) != (oy is None):
+        raise ValidationError(
+            "Disaster origin needs both origin_x and origin_y (or neither for auto)."
+        )
+    if ox is not None and not grid.in_bounds(int(ox), int(oy)):
+        raise ValidationError(
+            f"Disaster origin ({ox}, {oy}) is outside the grid bounds."
+        )
+
     speed = config["speed_distribution"]
     max_dt = grid.cell_size_m / speed["max"]
     if config["dt_s"] > max_dt + 1e-9:
@@ -47,6 +58,13 @@ def config_to_dict(schema) -> dict:  # noqa: ANN001
     cfg = schema.model_dump() if hasattr(schema, "model_dump") else dict(schema)
     cfg["speed_distribution"] = cfg.pop("speed")
     cfg["pre_movement_distribution"] = cfg.pop("pre_movement")
+    disaster = dict(cfg.get("disaster") or {})
+    if disaster.get("type", "none") != "none":
+        ox, oy = disaster.pop("origin_x", None), disaster.pop("origin_y", None)
+        disaster["origin"] = [int(ox), int(oy)] if ox is not None and oy is not None else None
+    else:
+        disaster = {"type": "none", "intensity": 0.0, "origin": None}
+    cfg["disaster"] = disaster
     return cfg
 
 

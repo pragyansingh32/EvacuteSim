@@ -231,7 +231,10 @@ class TestDrawioEndpoint:
         assert body["status"] == "completed"
         m = body["metrics"]
         assert (
-            m["evacuated_count"] + m["unreachable_count"] + m["remaining_count"]
+            m["evacuated_count"]
+            + m["unreachable_count"]
+            + (m["incapacitated_count"] or 0)
+            + m["remaining_count"]
             == m["total_occupants"]
         )
 

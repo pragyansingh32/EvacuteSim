@@ -40,7 +40,17 @@ export interface DistributionSpec {
   max: number
 }
 
+export type DisasterType = 'none' | 'fire' | 'earthquake' | 'stampede'
+
+export interface DisasterConfig {
+  type: DisasterType
+  intensity: number
+  origin_x?: number | null
+  origin_y?: number | null
+}
+
 export interface ScenarioConfig {
+  disaster: DisasterConfig
   zone_populations: Record<string, number>
   speed: DistributionSpec
   pre_movement: DistributionSpec
@@ -90,6 +100,8 @@ export interface RunMetrics {
   total_occupants: number | null
   evacuated_count: number | null
   unreachable_count: number | null
+  incapacitated_count: number | null
+  disaster: { type: string; intensity: number; [k: string]: unknown }
   remaining_count: number | null
   t50_s: number | null
   t90_s: number | null
@@ -131,7 +143,7 @@ export interface RunDetail extends RunSummary {
   metrics: RunMetrics | null
   error: { code: string; message: string } | null
   building_snapshot: Record<string, unknown> | null
-  timeline: [number, number, number, number][]
+  timeline: [number, number, number, number, ...number[]][]
   frames: Frame[]
 }
 
@@ -188,6 +200,13 @@ export const STATUS_LABELS: Record<string, string> = {
   running: 'Running',
   completed: 'Completed',
   failed: 'Failed',
+}
+
+export const DISASTER_LABELS: Record<string, string> = {
+  none: 'No disaster',
+  fire: 'Fire',
+  earthquake: 'Earthquake',
+  stampede: 'Stampede',
 }
 
 export const STRATEGY_LABELS: Record<string, string> = {

@@ -63,4 +63,9 @@ def _api_config(config: dict) -> dict:
         cfg["speed"] = cfg.pop("speed_distribution")
     if "pre_movement_distribution" in cfg:
         cfg["pre_movement"] = cfg.pop("pre_movement_distribution")
+    disaster = dict(cfg.get("disaster") or {})
+    if "origin" in disaster:
+        origin = disaster.pop("origin") or (None, None)
+        disaster["origin_x"], disaster["origin_y"] = origin[0], origin[1]
+    cfg["disaster"] = disaster
     return cfg

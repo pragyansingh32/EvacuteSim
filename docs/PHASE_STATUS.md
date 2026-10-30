@@ -286,6 +286,44 @@ make the system run it properly"):
 
 Tests: **132 backend**, 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 11: disaster scenarios (fire / earthquake / stampede)
+
+User request: "add different scenarios like earthquake, fire, stampede... and
+in those scenario how the evacuation plan held on" + "a section where you
+include under what basis the system creates the simulation."
+
+1. **Disaster models** (`app/simulation/disasters.py`) — three dynamic
+   processes that evolve during the simulation, blocking cells and forcing
+   re-routing:
+   - **Fire**: ignites farthest from exits, radius grows at
+     (0.05 + 0.20 × intensity) cells/s; occupants on newly burning cells are
+     incapacitated; smoke permeates walls (no CFD).
+   - **Earthquake**: collapses at t = 30 − 20 × intensity; debris blocks
+     round(intensity² × 0.12 × floor) cells near exits first; occupants on
+     debris are crushed; waiting occupants' reaction times extended by
+     25 × intensity (confusion).
+   - **Stampede**: congestion-triggered crush zones (8 s window, intensity-
+     dependent threshold) become impassable obstacles (fallen people);
+     occupants are shoved to free neighbors.
+2. **Engine integration** — dynamic blocked cells overlay the static walls;
+   exit distance fields recompute when the network changes; all occupants
+   re-route to the nearest reachable exit; incapacitated is a terminal status
+   in the mass balance: total = evacuated + unreachable + incapacitated +
+   remaining.
+3. **UI** — Scenario Editor "Disaster scenario" card (type select + intensity
+   slider + model description); Run page disaster summary banner +
+   Incapacitated timeline line + status legend entry; **Methodology page**
+   documenting the full simulation basis, routing strategies, disaster
+   models with formulas, mass balance, and limitations.
+4. **Samples** — "Fire (severe)" and "Earthquake (moderate)" sample
+   scenarios; fire verified live: 99/120 evacuated, 21 incapacitated, 214
+   cells burned.
+
+Tests: **144 backend** (+12 disaster), 4 frontend; lint and tsc clean.
+Fixed en route: disaster config round-trip through engine_config_to_dict
+(field name mismatch caused disasters to be silently ignored), disaster=None
+handling for pre-disaster runs in the response schema, and Otsu off-by-one.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

@@ -4,6 +4,7 @@ import AdvisorPage from './pages/AdvisorPage'
 import RestorePointsPage from './pages/RestorePointsPage'
 import BuildingEditorPage from './pages/BuildingEditorPage'
 import ComparePage from './pages/ComparePage'
+import MethodologyPage from './pages/MethodologyPage'
 import ExperimentsPage from './pages/ExperimentsPage'
 import HomePage from './pages/HomePage'
 import ImportPlanPage from './pages/ImportPlanPage'
@@ -38,6 +39,7 @@ export default function App() {
         <NavLink to="/experiments">Experiments</NavLink>
         <NavLink to="/advisor">AI Advisor</NavLink>
         <NavLink to="/accuracy">System Accuracy</NavLink>
+        <NavLink to="/methodology">Methodology</NavLink>
         <div className="section-label">System</div>
         <NavLink to="/restore-points">Restore Points</NavLink>
         <div className="footnote">
@@ -62,6 +64,7 @@ export default function App() {
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
           <Route path="/accuracy" element={<AccuracyPage />} />
+          <Route path="/methodology" element={<MethodologyPage />} />
           <Route path="/advisor" element={<AdvisorPage />} />
           <Route path="/restore-points" element={<RestorePointsPage />} />
         </Routes>

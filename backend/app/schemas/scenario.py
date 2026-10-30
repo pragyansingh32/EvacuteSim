@@ -34,9 +34,36 @@ class DistributionSpec(BaseModel):
         return v
 
 
+DISASTER_TYPES = ("none", "fire", "earthquake", "stampede")
+
+
+class DisasterSpecSchema(BaseModel):
+    """Disaster scenario: type, intensity (0-1), optional origin cell.
+
+    The disaster evolves DURING the simulation (fire spreads, an earthquake
+    collapses structure at a set time, stampede crush zones form at
+    chokepoints). Models are abstract approximations — see the Methodology
+    page and docs/SIMULATION_MODEL.md."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str = Field(default="none")
+    intensity: float = Field(default=0.0, ge=0.0, le=1.0)
+    origin_x: int | None = Field(default=None, ge=0)
+    origin_y: int | None = Field(default=None, ge=0)
+
+    @field_validator("type")
+    @classmethod
+    def _known_type(cls, v: str) -> str:
+        if v not in DISASTER_TYPES:
+            raise ValueError(f"disaster type must be one of {DISASTER_TYPES}")
+        return v
+
+
 class ScenarioConfigSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    disaster: DisasterSpecSchema = Field(default_factory=DisasterSpecSchema)
     zone_populations: dict[str, int]
     speed: DistributionSpec
     pre_movement: DistributionSpec

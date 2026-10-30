@@ -175,7 +175,10 @@ class TestRunEndpoints:
         assert metrics["engine_status"] == "completed"
         # Mass balance via API
         assert (
-            metrics["evacuated_count"] + metrics["unreachable_count"] + metrics["remaining_count"]
+            metrics["evacuated_count"]
+            + metrics["unreachable_count"]
+            + (metrics["incapacitated_count"] or 0)
+            + metrics["remaining_count"]
             == metrics["total_occupants"]
         )
         # Frames are present for the live view

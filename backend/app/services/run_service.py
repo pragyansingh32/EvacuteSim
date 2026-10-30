@@ -36,6 +36,29 @@ RUN_STATUS_COMPLETED = "completed"
 RUN_STATUS_FAILED = "failed"
 
 
+def _read_disaster(config: dict) -> dict:
+    """Read disaster settings from either the scenario format
+    ({"disaster": {"type": ..., "origin_x": ...}}) or the engine format
+    ({"disaster_type": ..., "disaster_origin": ...})."""
+    if "disaster_type" in config:
+        # Engine round-trip format
+        origin = config.get("disaster_origin")
+        return {
+            "disaster_type": config["disaster_type"],
+            "disaster_intensity": config.get("disaster_intensity", 0.0),
+            "disaster_origin": tuple(origin) if origin else None,
+        }
+    disaster = config.get("disaster") or {}
+    if disaster.get("type", "none") == "none":
+        return {"disaster_type": "none", "disaster_intensity": 0.0, "disaster_origin": None}
+    origin = disaster.get("origin")
+    return {
+        "disaster_type": disaster["type"],
+        "disaster_intensity": float(disaster.get("intensity", 0.0)),
+        "disaster_origin": tuple(origin) if origin else None,
+    }
+
+
 def build_engine_config(config: dict) -> EngineConfig:
     """Stored/plain scenario config dict -> engine EngineConfig (validating)."""
     try:
@@ -47,6 +70,7 @@ def build_engine_config(config: dict) -> EngineConfig:
             blocked_cells={tuple(c) for c in config.get("blocked_cells", [])},
             blocked_exit_ids=set(config.get("blocked_exit_ids", [])),
             exit_capacity_overrides=dict(config.get("exit_capacity_overrides", {})),
+            **_read_disaster(config),
             seed=int(config["seed"]),
             max_duration_s=float(config["max_duration_s"]),
             dt_s=float(config["dt_s"]),
@@ -61,6 +85,9 @@ def engine_config_to_dict(cfg: EngineConfig) -> dict:
     data = asdict(cfg)
     data["blocked_cells"] = sorted([list(c) for c in cfg.blocked_cells])
     data["blocked_exit_ids"] = sorted(cfg.blocked_exit_ids)
+    data["disaster_origin"] = (
+        list(cfg.disaster_origin) if cfg.disaster_origin else None
+    )
     return data
 
 
@@ -163,6 +190,8 @@ def run_metrics(run: RunModel) -> dict | None:
         "total_occupants": result.get("total_occupants"),
         "evacuated_count": result.get("evacuated_count"),
         "unreachable_count": result.get("unreachable_count"),
+        "incapacitated_count": result.get("incapacitated_count"),
+        "disaster": result.get("disaster") or {},
         "remaining_count": result.get("remaining_count"),
         "t50_s": result.get("t50_s"),
         "t90_s": result.get("t90_s"),

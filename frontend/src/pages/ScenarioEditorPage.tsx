@@ -6,9 +6,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiRequestError } from '../api/client'
 import { DisclaimerBanner, ErrorAlert, strategyLabel } from '../components/ui'
+import { DISASTER_LABELS } from '../types'
 import type { BuildingDetail, ScenarioConfig, ScenarioDetail } from '../types'
 
 const defaultConfig = (zones: { id: string }[]): ScenarioConfig => ({
+  disaster: { type: 'none' as const, intensity: 0 },
   zone_populations: Object.fromEntries(zones.map((z) => [z.id, 0])),
   speed: { distribution: 'normal', mean: 1.2, sd: 0.25, min: 0.6, max: 1.8 },
   pre_movement: { distribution: 'uniform', min: 0, max: 15 },
@@ -48,7 +50,7 @@ export default function ScenarioEditorPage() {
           setScenarioId(s.id)
           setName(s.name)
           setDescription(s.description)
-          setConfig(s.config)
+          setConfig({ ...s.config, disaster: s.config.disaster ?? { type: 'none', intensity: 0 } })
           return api.getBuilding(s.building_id)
         })
         .then(setBuilding)
@@ -317,6 +319,47 @@ export default function ScenarioEditorPage() {
                 ))}
               </label>
             ) : null}
+          </div>
+
+          <div className="card">
+            <h3>Disaster scenario</h3>
+            <label className="field">
+              <span className="lbl">Disaster type</span>
+              <select
+                value={config.disaster.type}
+                onChange={(e) =>
+                  set({ disaster: { ...config.disaster, type: e.target.value as ScenarioConfig['disaster']['type'] } })
+                }
+              >
+                {Object.entries(DISASTER_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </label>
+            {config.disaster.type !== 'none' && (
+              <>
+                <label className="field">
+                  <span className="lbl">
+                    Intensity ({Math.round(config.disaster.intensity * 100)}%) — higher = worse
+                  </span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={100}
+                    value={Math.round(config.disaster.intensity * 100)}
+                    onChange={(e) => set({ disaster: { ...config.disaster, intensity: Number(e.target.value) / 100 } })}
+                  />
+                </label>
+                <div className="kbd-note">
+                  {config.disaster.type === 'fire' &&
+                    'Fire ignites far from the exits and spreads as a growing radius of smoke/fire. Caught occupants become casualties.'}
+                  {config.disaster.type === 'earthquake' &&
+                    'Structural collapse after a delay blocks cells (debris) and extends reaction times. Debris concentrates near exits first.'}
+                  {config.disaster.type === 'stampede' &&
+                    'High congestion at chokepoints creates permanent crush zones (fallen people become obstacles).'}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="card">
