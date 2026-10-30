@@ -833,3 +833,35 @@ body:has([data-theme='dark']) {
   border-radius: var(--radius-sm);
   padding: 12px 14px;
 }
+
+/* ---- text overflow fixes ---- */
+.metric-card .value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.status-bar span {
+  white-space: nowrap;
+}
+.time-readout b {
+  font-size: 22px;
+}
+.card h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+table.data td {
+  max-width: 300px;
+  overflow-wrap: break-word;
+}
+.advisor-obs-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.advisor-obs-head strong {
+  overflow-wrap: break-word;
+}

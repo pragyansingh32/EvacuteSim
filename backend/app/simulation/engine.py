@@ -78,9 +78,7 @@ class EngineConfig:
     blocked_cells: set[tuple[int, int]] = field(default_factory=set)
     blocked_exit_ids: set[str] = field(default_factory=set)
     exit_capacity_overrides: dict[str, float] = field(default_factory=dict)
-    disaster_type: str = "none"
-    disaster_intensity: float = 0.0
-    disaster_origin: tuple[int, int] | None = None
+    disasters: list[DisasterSpec] = field(default_factory=list)
     seed: int = 0
     max_duration_s: float = 600.0
     dt_s: float = settings.default_dt_s
@@ -103,7 +101,7 @@ class RunResult:
     incapacitated_count: int = 0
     remaining_count: int = 0
     remaining_breakdown: dict = field(default_factory=dict)
-    disaster: dict = field(default_factory=dict)
+    disasters: list[dict] = field(default_factory=list)
     t50_s: float | None = None
     t90_s: float | None = None
     t95_s: float | None = None
@@ -134,7 +132,7 @@ class RunResult:
             "incapacitated_count": self.incapacitated_count,
             "remaining_count": self.remaining_count,
             "remaining_breakdown": self.remaining_breakdown,
-            "disaster": self.disaster,
+            "disasters": self.disasters,
             "t50_s": self.t50_s,
             "t90_s": self.t90_s,
             "t95_s": self.t95_s,
@@ -208,17 +206,13 @@ class EvacuationEngine:
 
         self._spawn_occupants()
 
-        # Disaster model (fire / earthquake / stampede) — evolves during the
+        # Disaster models (fire / earthquake / stampede / etc.) — multiple
+        # disasters can be active simultaneously. Each evolves during the
         # run: blocks cells dynamically, incapacitates occupants caught in
         # the event, and forces live re-routing.
-        self.disaster = None
-        if config.disaster_type != "none":
-            spec = DisasterSpec(
-                type=config.disaster_type,
-                intensity=config.disaster_intensity,
-                origin=config.disaster_origin,
-            )
-            self.disaster = create_disaster(
+        self.disasters: list = []
+        for spec in config.disasters:
+            model = create_disaster(
                 spec,
                 self.walkable,
                 self.rng,
@@ -227,10 +221,15 @@ class EvacuationEngine:
                 grid.width,
                 grid.height,
             )
-            if self.disaster.dynamic_blocked:
-                self.dynamic_blocked |= self.disaster.dynamic_blocked
+            if model is not None:
+                self.disasters.append(model)
+        if self.disasters:
+            for d in self.disasters:
+                if d.dynamic_blocked:
+                    self.dynamic_blocked |= d.dynamic_blocked
+            if self.dynamic_blocked:
                 self._recompute_fields()
-                self._incapacitate_on(self.disaster.dynamic_blocked)
+                self._incapacitate_on(self.dynamic_blocked)
 
         # Adaptive frame interval: cap the number of stored frames for very
         # long runs so result payloads stay bounded.
@@ -605,21 +604,31 @@ class EvacuationEngine:
         t_start = self.step_index * self.dt
         t_end = t_start + self.dt
 
-        # 0) Disaster evolution: the event blocks new cells (fire spread,
-        #    earthquake collapse, stampede crush) and may incapacitate
-        #    occupants standing there; route fields are recomputed and
-        #    everyone re-routed when the network changes.
-        if self.disaster is not None:
-            newly = self.disaster.step(t_end, self.dt, self.occupants)
+        # 0) Disaster evolution: multiple disasters can be active at once.
+        #    Each blocks new cells (fire spread, earthquake collapse, stampede
+        #    crush) and may incapacitate occupants standing there. Route
+        #    fields are recomputed and everyone re-routed when the network
+        #    changes. Stampede crush zones SHOVE occupants to free neighbors;
+        #    fire/earthquake/gas/flood INCAPACITATE occupants on newly
+        #    blocked cells.
+        if self.disasters:
+            newly = set()
+            any_dirty = False
+            has_stampede = False
+            for d in self.disasters:
+                step_new = d.step(t_end, self.dt, self.occupants)
+                newly |= step_new
+                if d.fields_dirty:
+                    any_dirty = True
+                if d.type == "stampede":
+                    has_stampede = True
             if newly:
                 self.dynamic_blocked |= newly
-                if self.disaster.type == "stampede":
-                    # Crush zone: occupants are SHOVED to free neighbors
-                    # (pushed aside by the crowd), not incapacitated.
+                if has_stampede:
                     self._shove_from(newly)
                 else:
                     self._incapacitate_on(newly)
-            if self.disaster.fields_dirty and self.step_index % 8 == 0:
+            if any_dirty and self.step_index % 8 == 0:
                 self._recompute_fields()
                 self._reroute_all()
 
@@ -644,7 +653,9 @@ class EvacuationEngine:
         for occ in self.occupants:
             if occ.status != STATUS_MOVING:
                 continue
-            factor = self.disaster.speed_factor(occ.pos) if self.disaster else 1.0
+            factor = 1.0
+            for d in self.disasters:
+                factor *= d.speed_factor(occ.pos)
             occ.move_accumulator_s += self.dt * factor
             cell_time = self.grid.cell_size_m / occ.speed_mps
             if occ.move_accumulator_s + 1e-9 < cell_time:
@@ -723,8 +734,8 @@ class EvacuationEngine:
             return
         key = cells_to_key(*dest)
         self.congestion[key] = self.congestion.get(key, 0) + len(occupants)
-        if self.disaster is not None:
-            self.disaster.record_attempt(dest)
+        for d in self.disasters:
+            d.record_attempt(dest)
         for occ in occupants:
             occ.queue_time_s += self.dt
 
@@ -958,7 +969,7 @@ class EvacuationEngine:
             incapacitated_count=incapacitated,
             remaining_count=inside,
             remaining_breakdown=remaining_breakdown,
-            disaster=self.disaster.summary() if self.disaster else {"type": "none", "intensity": 0.0},
+            disasters=[d.summary() for d in self.disasters],
             t50_s=percentile_of_sorted(evac_times, 0.50),
             t90_s=percentile_of_sorted(evac_times, 0.90),
             t95_s=percentile_of_sorted(evac_times, 0.95),

@@ -349,6 +349,25 @@ the system accurately reports which designs FAIL under which disasters.
 
 Tests: **144 backend**, 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 13: multi-disaster + inline AI advisor + UI polish
+
+1. **Multi-disaster support** — the engine and UI now support combining
+   multiple disasters in a single run (e.g., fire + stampede). Each
+   disaster's `step()` is called per step; their blocked cells are unioned;
+   speed factors multiply. The Scenario Editor shows disaster "chips" with
+   individual intensity sliders and an add-disaster dropdown.
+2. **AI Advisor inline on the run page** — a "Ask the AI Advisor" button on
+   every completed run calls the rule-based analysis and shows observations
+   + recommendations inline, with a link to the full advisor page.
+3. **Text overlap fixes** — metric card values, status bar, table cells, and
+   chart labels now have proper overflow handling and responsive sizing.
+4. **Workflow fix** — the Building Editor now shows a "Create scenario & run
+   evacuation for this building" button after saving, which navigates to the
+   Scenario Editor with the building pre-selected. The Home page has a
+   Quick Start workflow card with 4 numbered steps.
+
+Tests: **144 backend**, 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

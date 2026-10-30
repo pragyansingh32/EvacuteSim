@@ -15,6 +15,12 @@ from tests.conftest import grid_from_rows
 
 
 def config(disaster_type: str, intensity: float, population: int = 16, seed: int = 11, **overrides):
+    from app.simulation.disasters import DisasterSpec
+
+    disasters = []
+    if disaster_type != "none":
+        origin = overrides.pop("disaster_origin", None)
+        disasters.append(DisasterSpec(type=disaster_type, intensity=intensity, origin=origin))
     params = {
         "zone_populations": {"Z": population},
         "speed_distribution": {"distribution": "uniform", "min": 1.0, "max": 1.0},
@@ -22,8 +28,7 @@ def config(disaster_type: str, intensity: float, population: int = 16, seed: int
         "seed": seed,
         "max_duration_s": 240.0,
         "dt_s": 0.25,
-        "disaster_type": disaster_type,
-        "disaster_intensity": intensity,
+        "disasters": disasters,
     }
     params.update(overrides)
     return EngineConfig(**params)
@@ -72,8 +77,8 @@ class TestFire:
         assert mass_ok(baseline) and mass_ok(fire)
         assert fire.incapacitated_count >= 1, "fire must catch at least one occupant"
         assert fire.evacuated_count < baseline.evacuated_count or fire.remaining_count > 0
-        assert fire.disaster["type"] == "fire"
-        assert fire.disaster["cells_blocked"] >= fire.disaster["ignited_cells"] > 0
+        assert fire.disasters[0]["type"] == "fire"
+        assert fire.disasters[0]["cells_blocked"] >= fire.disasters[0]["ignited_cells"] > 0
 
     def test_higher_intensity_is_worse(self):
         grid = office_grid()
@@ -107,7 +112,7 @@ class TestFire:
             pre_movement_distribution={"distribution": "uniform", "min": 8.0, "max": 8.0},
         )
         result = EvacuationEngine(grid, cfg).run()
-        assert result.disaster["origin"] == [2, 2]
+        assert result.disasters[0]["origin"] == [2, 2]
         # rate = 0.25 cells/s -> radius 2.0 by t=8 s: the whole 2x2 spawn
         # area is on fire exactly when the occupants finally react.
         assert result.incapacitated_count == 4
@@ -129,13 +134,13 @@ class TestEarthquake:
         cfg = config("earthquake", 0.8, population=24, seed=5, max_duration_s=60,
                      exit_capacity_overrides={"E": 0.75})
         engine = EvacuationEngine(grid, cfg)
-        collapse = engine.disaster.collapse_time
+        collapse = engine.disasters[0].collapse_time
         assert 0 < collapse < 30.0
         result = engine.run()
         assert mass_ok(result)
-        assert result.disaster["cells_blocked"] >= 1
+        assert result.disasters[0]["cells_blocked"] >= 1
         # Debris concentrates near exits: the exit cell itself can be debris.
-        assert result.disaster["type"] == "earthquake"
+        assert result.disasters[0]["type"] == "earthquake"
 
     def test_collapse_can_seal_the_exit(self):
         """Catastrophic intensity blocks cells nearest exits first — with a
@@ -147,7 +152,7 @@ class TestEarthquake:
                          exit_capacity_overrides={"E": 0.75})
         ).run()
         assert mass_ok(result)
-        assert result.disaster["cells_blocked"] >= 1
+        assert result.disasters[0]["cells_blocked"] >= 1
         # Either the exit survived and some escaped, or it was destroyed and
         # the plan fails — both are valid, honestly reported outcomes.
         assert result.status in ("completed", "incomplete")
@@ -181,7 +186,7 @@ class TestStampede:
                          exit_capacity_overrides={"E": 0.5})
         ).run()
         assert mass_ok(slow) and mass_ok(baseline)
-        assert slow.disaster["crush_cells"] >= 1
+        assert slow.disasters[0]["crush_cells"] >= 1
         # Crush zones slow movement: fewer people get out within the horizon.
         assert slow.evacuated_count < baseline.evacuated_count
 
@@ -190,7 +195,7 @@ class TestStampede:
         engine = EvacuationEngine(grid, config("stampede", 1.0, population=40, seed=6, max_duration_s=60,
                                                exit_capacity_overrides={"E": 0.5}))
         engine.run()
-        crush = engine.disaster.crush_zones
+        crush = engine.disasters[0].crush_zones
         assert crush
         # Crush zones grow only within 3 cells of a triggered cell.
         for cx, cy in crush:

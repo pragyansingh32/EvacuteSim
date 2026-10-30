@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import type { AdvisorReport } from '../api/client'
 import {
   Bar,
   BarChart,
@@ -35,6 +36,8 @@ export default function RunViewPage() {
   const [speed, setSpeed] = useState(4) // frames per second multiplier
   const [showCongestion, setShowCongestion] = useState(false)
   const [pulses, setPulses] = useState<ExitPulse[]>([])
+  const [advisorReport, setAdvisorReport] = useState<AdvisorReport | null>(null)
+  const [advisorBusy, setAdvisorBusy] = useState(false)
   const timerRef = useRef<number | null>(null)
   const lastTRef = useRef(0)
 
@@ -150,6 +153,23 @@ export default function RunViewPage() {
     return { inside, out: Math.max(0, total - inside) }
   }, [frame, run])
 
+  const analyzeRun = useCallback(async () => {
+    if (!run || run.status !== 'completed') return
+    setAdvisorBusy(true)
+    try {
+      const resp = await fetch(`/api/v1/advisor/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ run_id: run.id }),
+      })
+      if (resp.ok) setAdvisorReport(await resp.json())
+    } catch {
+      // ignore
+    } finally {
+      setAdvisorBusy(false)
+    }
+  }, [run])
+
   const exitData = useMemo(
     () =>
       (run?.metrics?.exit_stats ?? []).map((e) => ({
@@ -230,12 +250,14 @@ export default function RunViewPage() {
         </div>
       )}
 
-      {m && m.disaster && m.disaster.type !== 'none' && (
+      {m && m.disasters && m.disasters.length > 0 && (
         <div className="alert error">
-          <strong>{DISASTER_LABELS[m.disaster.type] ?? m.disaster.type} scenario</strong>
-          {" — "}intensity {Math.round((m.disaster.intensity as number) * 100)}%
-          {typeof m.disaster.cells_blocked === 'number' && `, ${m.disaster.cells_blocked} cell(s) blocked`}
-          {m.incapacitated_count ? `, ${m.incapacitated_count} incapacitated` : ""}
+          <strong>Active disasters: </strong>
+          {m.disasters.map((d) => `${DISASTER_LABELS[d.type] ?? d.type} @ ${Math.round(d.intensity * 100)}%`).join(', ')}
+          {typeof m.incapacitated_count === 'number' && m.incapacitated_count > 0 &&
+            ` — ${m.incapacitated_count} incapacitated`}
+          {m.disasters.some((d) => typeof d.cells_blocked === 'number') &&
+            ` — ${m.disasters.reduce((sum, d) => sum + (typeof d.cells_blocked === 'number' ? d.cells_blocked : 0), 0)} cells blocked`}
           . See the Methodology page for model rules.
         </div>
       )}
@@ -334,6 +356,58 @@ export default function RunViewPage() {
             Occupants glide between the engine's recorded frames; door pulses mark each
             discharge. Playback shows exactly the recorded positions — nothing invented.
           </div>
+        </div>
+      )}
+
+      {run.status === 'completed' && !advisorReport && (
+        <div className="card" style={{ textAlign: 'center', padding: '14px 20px' }}>
+          <button onClick={analyzeRun} disabled={advisorBusy}>
+            {advisorBusy ? 'Analyzing…' : 'Ask the AI Advisor'}
+          </button>
+          <span className="muted" style={{ marginLeft: 10 }}>
+            Rule-based analysis of this run — identifies issues and suggests improvements.
+          </span>
+        </div>
+      )}
+
+      {advisorReport && (
+        <div className="card">
+          <h3>AI Advisor — {advisorReport.verdict}</h3>
+          {advisorReport.observations.map((o, i) => (
+            <div key={i} className="advisor-obs">
+              <div className="advisor-obs-head">
+                <span
+                  className="badge"
+                  style={
+                    o.severity === 'ok'
+                      ? { background: 'var(--ok-soft)', color: 'var(--ok)' }
+                      : o.severity === 'warn'
+                        ? { background: 'var(--warn-soft)', color: 'var(--warn)' }
+                        : o.severity === 'critical'
+                          ? { background: 'var(--danger-soft)', color: 'var(--danger)' }
+                          : { background: 'var(--accent-soft)', color: 'var(--accent)' }
+                  }
+                >
+                  {o.severity}
+                </span>
+                <strong>{o.title}</strong>
+              </div>
+              <div className="muted">{o.detail}</div>
+            </div>
+          ))}
+          {advisorReport.recommendations.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <strong>Recommendations:</strong>
+              <ul className="muted" style={{ margin: '4px 0 0 18px' }}>
+                {advisorReport.recommendations.map((r, i) => (
+                  <li key={i}>{r.title} — {r.patch_summary}</li>
+                ))}
+              </ul>
+              <Link to={`/advisor?run=${run.id}`}>
+                <button className="small" style={{ marginTop: 8 }}>Open full advisor</button>
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

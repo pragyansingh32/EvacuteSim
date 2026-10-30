@@ -21,6 +21,7 @@ from app.models import RunModel
 from app.repositories import buildings as building_repo
 from app.repositories import runs as run_repo
 from app.repositories import scenarios as scenario_repo
+from app.simulation.disasters import DisasterSpec
 from app.simulation.engine import EngineConfig, EvacuationEngine
 from app.simulation.grid import BuildingGrid
 
@@ -36,27 +37,37 @@ RUN_STATUS_COMPLETED = "completed"
 RUN_STATUS_FAILED = "failed"
 
 
-def _read_disaster(config: dict) -> dict:
-    """Read disaster settings from either the scenario format
-    ({"disaster": {"type": ..., "origin_x": ...}}) or the engine format
-    ({"disaster_type": ..., "disaster_origin": ...})."""
-    if "disaster_type" in config:
-        # Engine round-trip format
+def _read_disasters(config: dict) -> list[dict]:
+    """Read disaster specs from any config format into a normalized list."""
+    # New format: disasters is a list of dicts
+    if "disasters" in config and isinstance(config["disasters"], list):
+        return [
+            {
+                "type": d.get("type", "none"),
+                "intensity": float(d.get("intensity", 0.0)),
+                "origin": tuple(d["origin"]) if d.get("origin") else None,
+            }
+            for d in config["disasters"]
+            if d.get("type", "none") != "none"
+        ]
+    # Engine round-trip: disaster_type at top level
+    if config.get("disaster_type", "none") != "none":
         origin = config.get("disaster_origin")
-        return {
-            "disaster_type": config["disaster_type"],
-            "disaster_intensity": config.get("disaster_intensity", 0.0),
-            "disaster_origin": tuple(origin) if origin else None,
-        }
+        return [{
+            "type": config["disaster_type"],
+            "intensity": float(config.get("disaster_intensity", 0.0)),
+            "origin": tuple(origin) if origin else None,
+        }]
+    # Old scenario format: single disaster object
     disaster = config.get("disaster") or {}
-    if disaster.get("type", "none") == "none":
-        return {"disaster_type": "none", "disaster_intensity": 0.0, "disaster_origin": None}
-    origin = disaster.get("origin")
-    return {
-        "disaster_type": disaster["type"],
-        "disaster_intensity": float(disaster.get("intensity", 0.0)),
-        "disaster_origin": tuple(origin) if origin else None,
-    }
+    if isinstance(disaster, dict) and disaster.get("type", "none") != "none":
+        origin = disaster.get("origin")
+        return [{
+            "type": disaster["type"],
+            "intensity": float(disaster.get("intensity", 0.0)),
+            "origin": tuple(origin) if origin else None,
+        }]
+    return []
 
 
 def build_engine_config(config: dict) -> EngineConfig:
@@ -70,7 +81,10 @@ def build_engine_config(config: dict) -> EngineConfig:
             blocked_cells={tuple(c) for c in config.get("blocked_cells", [])},
             blocked_exit_ids=set(config.get("blocked_exit_ids", [])),
             exit_capacity_overrides=dict(config.get("exit_capacity_overrides", {})),
-            **_read_disaster(config),
+            disasters=[
+                DisasterSpec(type=d["type"], intensity=d["intensity"], origin=d["origin"])
+                for d in _read_disasters(config)
+            ],
             seed=int(config["seed"]),
             max_duration_s=float(config["max_duration_s"]),
             dt_s=float(config["dt_s"]),
@@ -85,9 +99,14 @@ def engine_config_to_dict(cfg: EngineConfig) -> dict:
     data = asdict(cfg)
     data["blocked_cells"] = sorted([list(c) for c in cfg.blocked_cells])
     data["blocked_exit_ids"] = sorted(cfg.blocked_exit_ids)
-    data["disaster_origin"] = (
-        list(cfg.disaster_origin) if cfg.disaster_origin else None
-    )
+    data["disasters"] = [
+        {
+            "type": d.type,
+            "intensity": d.intensity,
+            "origin": list(d.origin) if d.origin else None,
+        }
+        for d in cfg.disasters
+    ]
     return data
 
 

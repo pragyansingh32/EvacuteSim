@@ -50,7 +50,7 @@ export interface DisasterConfig {
 }
 
 export interface ScenarioConfig {
-  disaster: DisasterConfig
+  disasters: DisasterConfig[]
   zone_populations: Record<string, number>
   speed: DistributionSpec
   pre_movement: DistributionSpec
@@ -101,7 +101,7 @@ export interface RunMetrics {
   evacuated_count: number | null
   unreachable_count: number | null
   incapacitated_count: number | null
-  disaster: { type: string; intensity: number; [k: string]: unknown }
+  disasters: { type: string; intensity: number; [k: string]: unknown }[]
   remaining_count: number | null
   t50_s: number | null
   t90_s: number | null
