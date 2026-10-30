@@ -147,14 +147,14 @@ export default function ComparePage() {
               <h3>Headline metrics side by side</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: chart.tick }} />
-                  <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Evacuation time (s)" fill="#1f6feb" />
-                  <Bar dataKey="T90 (s)" fill="#93c5fd" />
-                  <Bar dataKey="Mean queue (s)" fill="#b45309" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: chart.tick }} tickLine={false} axisLine={{ stroke: chart.grid }} />
+                  <YAxis tick={{ fontSize: 11, fill: chart.tick }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: chart.tooltipBg, border: `1px solid ${chart.grid}`, borderRadius: 8, color: chart.tick }} />
+                  <Legend iconType="circle" iconSize={8} />
+                  <Bar dataKey="Evacuation time (s)" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="T90 (s)" fill="#a5b4fc" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Mean queue (s)" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

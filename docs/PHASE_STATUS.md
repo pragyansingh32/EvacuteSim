@@ -368,6 +368,26 @@ Tests: **144 backend**, 4 frontend; lint and tsc clean.
 
 Tests: **144 backend**, 4 frontend; lint and tsc clean.
 
+## Post-delivery enhancement 14: multi-disaster format + workflow + dark mode fixes
+
+1. **Multi-disaster schema** — `ScenarioConfigSchema` now accepts
+   `disasters: list[DisasterSpecSchema]` (replacing singular `disaster`).
+   The scenario service, routes, and engine all handle the list format.
+   Backward compatible: old configs with singular `disaster` are converted.
+2. **Workflow fix** — Building Editor now shows "→ Create a scenario & run
+   evacuation for this building" after save; navigates to Scenario Editor
+   with the building pre-selected. Home page has a Quick Start workflow card.
+3. **Error details** — validation errors now show field-level details from
+   the backend (`loc → msg`) instead of just the summary message.
+4. **Dark mode chart fixes** — all Recharts surfaces (grid, axes, tooltips)
+   are theme-aware; bar/line colors updated for dark mode contrast.
+5. **Enhanced timeline** — cleaner axis styling, conditional incapacitated
+   line, themed tooltip, legend icons.
+6. **Run page AI Advisor** — inline "Ask the AI Advisor" button on every
+   completed run; observations and recommendations shown without leaving.
+
+Tests: **144 backend**, 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,

@@ -33,16 +33,12 @@ def _validate_config_against_building(grid: BuildingGrid, config: dict) -> None:
         if not grid.in_bounds(x, y):
             raise ValidationError(f"Blocked cell ({x}, {y}) is outside the grid bounds.")
 
-    disaster = config.get("disaster") or {}
-    ox, oy = disaster.get("origin_x"), disaster.get("origin_y")
-    if (ox is None) != (oy is None):
-        raise ValidationError(
-            "Disaster origin needs both origin_x and origin_y (or neither for auto)."
-        )
-    if ox is not None and not grid.in_bounds(int(ox), int(oy)):
-        raise ValidationError(
-            f"Disaster origin ({ox}, {oy}) is outside the grid bounds."
-        )
+    for d in config.get("disasters", []):
+        origin = d.get("origin")
+        if origin and not grid.in_bounds(int(origin[0]), int(origin[1])):
+            raise ValidationError(
+                f"Disaster origin ({origin[0]}, {origin[1]}) is outside the grid bounds."
+            )
 
     speed = config["speed_distribution"]
     max_dt = grid.cell_size_m / speed["max"]

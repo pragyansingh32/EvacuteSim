@@ -111,7 +111,7 @@ def sample_hall() -> BuildingGrid:
 
 def _scenario_config(**overrides) -> dict:
     config = {
-        "disaster": {"type": "none", "intensity": 0.0, "origin_x": None, "origin_y": None},
+        "disasters": [],
         "zone_populations": {},
         "speed_distribution": dict(DEFAULT_SPEED),
         "pre_movement_distribution": dict(DEFAULT_PRE_MOVEMENT),

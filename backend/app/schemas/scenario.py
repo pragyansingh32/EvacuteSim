@@ -63,7 +63,8 @@ class DisasterSpecSchema(BaseModel):
 class ScenarioConfigSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    disaster: DisasterSpecSchema = Field(default_factory=DisasterSpecSchema)
+    disaster: DisasterSpecSchema | None = Field(default=None, description='backward compat')
+    disasters: list[DisasterSpecSchema] = Field(default_factory=list)
     zone_populations: dict[str, int]
     speed: DistributionSpec
     pre_movement: DistributionSpec

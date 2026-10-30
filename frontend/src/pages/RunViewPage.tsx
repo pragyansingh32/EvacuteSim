@@ -131,6 +131,8 @@ export default function RunViewPage() {
     return () => window.clearTimeout(timer)
   }, [frameIdx, run, frame])
 
+  const hasIncapacitated = (run?.timeline ?? []).some((entry) => entry.length > 4 && entry[4] > 0)
+
   const curveData = useMemo(
     () =>
       (run?.timeline ?? []).map((entry) => {
@@ -417,15 +419,17 @@ export default function RunViewPage() {
             <h3>Evacuation timeline</h3>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={curveData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-                <XAxis dataKey="t" tick={{ fontSize: 11, fill: chart.tick }} label={{ value: 't (s)', position: 'insideBottom', offset: -10 }} />
-                <YAxis tick={{ fontSize: 11, fill: chart.tick }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="Evacuated" stroke="#15803d" dot={false} />
-                <Line type="monotone" dataKey="Inside" stroke="#1f6feb" dot={false} />
-                <Line type="monotone" dataKey="At exit door" stroke="#b45309" dot={false} />
-                <Line type="monotone" dataKey="Incapacitated" stroke="#e11d48" dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+                <XAxis dataKey="t" tick={{ fontSize: 11, fill: chart.tick }} tickLine={false} axisLine={{ stroke: chart.grid }} />
+                <YAxis tick={{ fontSize: 11, fill: chart.tick }} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ background: chart.tooltipBg, border: `1px solid ${chart.grid}`, borderRadius: 8, color: chart.tick }} />
+                <Legend iconType="circle" iconSize={8} />
+                <Line type="monotone" dataKey="Evacuated" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Inside" stroke="#6366f1" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="'At exit door'" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                {hasIncapacitated && (
+                  <Line type="stepAfter" dataKey="Incapacitated" stroke="#e11d48" strokeWidth={2} dot={false} fill="rgba(225,29,72,0.1)" />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
