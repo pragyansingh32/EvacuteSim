@@ -125,6 +125,40 @@ assignment dealing). Given the same layout snapshot, config, seed, and engine
 version, results are identical — verified by tests comparing full result
 documents. The engine version string is stored with each run.
 
+## Disaster scenarios
+
+Three dynamic disaster processes evolve during the simulation, blocking cells
+and forcing occupants to re-route. All are abstract approximations documented
+below — not physics simulations.
+
+### Fire
+- **Ignition**: at the floor cell farthest from all exits (worst case for
+  early detection), or a user-specified cell.
+- **Spread**: radius(t) = (0.05 + 0.20 × intensity) cells/s, Chebyshev
+  distance from the origin. Cells within the radius become impassable.
+- **Casualties**: occupants standing on newly burning cells are
+  incapacitated (counted honestly in the mass balance).
+- **Simplification**: smoke permeates walls (no CFD, no doors slowing smoke).
+
+### Earthquake
+- **Collapse**: at t = 30 − 20 × intensity seconds (higher intensity →
+  earlier structural failure).
+- **Debris**: round(intensity² × 0.12 × floor_cells) cells become impassable,
+  chosen from cells sorted by proximity to the nearest exit (damage
+  concentrates at structural connections).
+- **Casualties**: occupants standing on debris are incapacitated (crushed).
+- **Confusion**: occupants not yet moving when the quake hits get their
+  reaction delay extended by 25 × intensity seconds.
+
+### Stampede
+- **Trigger**: the engine tracks blocked movement attempts per cell in a
+  rolling 8-second window. When a cell exceeds the threshold (lower at higher
+  intensity), it and its 3-cell neighborhood become a permanent crush zone.
+- **Effect**: crush zone cells become impassable obstacles (people have
+  fallen). Occupants standing there are shoved to a free neighbor (not lost).
+- **Scope**: models crush-induced capacity loss at chokepoints; trampling
+  casualties are out of scope.
+
 ## What is approximated or omitted (summary)
 
 | Behavior | Status |
