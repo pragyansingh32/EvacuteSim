@@ -121,6 +121,13 @@ export const api = {
   // system validation
   validationBattery: () => request<ValidationReport>('/validation/battery'),
 
+  // disaster readiness
+  disasterReadiness: (scenarioId: number) =>
+    request<Record<string, unknown>>("/validation/disaster-readiness", {
+      method: "POST",
+      body: JSON.stringify({ scenario_id: scenarioId }),
+    }),
+
   // AI advisor
   advisorAnalyze: (runId: number) =>
     request<AdvisorReport>('/advisor/analyze', { method: 'POST', body: JSON.stringify({ run_id: runId }) }),

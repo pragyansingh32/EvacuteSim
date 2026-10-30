@@ -34,7 +34,7 @@ class DistributionSpec(BaseModel):
         return v
 
 
-DISASTER_TYPES = ("none", "fire", "earthquake", "stampede")
+DISASTER_TYPES = ("none", "fire", "earthquake", "stampede", "gas_leak", "flood", "power_outage")
 
 
 class DisasterSpecSchema(BaseModel):

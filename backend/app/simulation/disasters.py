@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-DISASTER_TYPES = ("none", "fire", "earthquake", "stampede")
+DISASTER_TYPES = ("none", "fire", "earthquake", "stampede", "gas_leak", "flood", "power_outage")
 
 NEIGHBORS_4 = ((0, -1), (1, 0), (0, 1), (-1, 0))
 
@@ -245,6 +245,111 @@ class StampedeDisaster(BaseDisaster):
         }
 
 
+class GasLeakDisaster(BaseDisaster):
+    """Toxic gas leak: spreads through walls (gas permeates everything) and
+    is invisible — occupants don't re-route until the gas reaches their area."""
+
+    type = "gas_leak"
+
+    def __init__(self, spec, floor, rng, dist_fields, width, height) -> None:  # noqa: ANN001
+        super().__init__(spec, floor, rng)
+        self.width = width
+        self.height = height
+        if spec.origin is not None and spec.origin in floor:
+            self.origin = spec.origin
+        else:
+            cells = sorted(floor)
+            self.origin = cells[len(cells) // 2]
+        self.affected: set[tuple[int, int]] = set()
+        self.rate = 0.03 + 0.12 * self.intensity
+
+    def step(self, t: float, dt: float, occupants) -> set[tuple[int, int]]:  # noqa: ANN001
+        del dt, occupants
+        radius = self.rate * t
+        newly: set[tuple[int, int]] = set()
+        ox, oy = self.origin
+        reach = int(math.ceil(radius))
+        for y in range(max(0, oy - reach), min(self.height, oy + reach + 1)):
+            for x in range(max(0, ox - reach), min(self.width, ox + reach + 1)):
+                cell = (x, y)
+                if cell in self.affected or cell not in self.floor:
+                    continue
+                if chebyshev(cell, self.origin) <= radius:
+                    newly.add(cell)
+        if newly:
+            self.affected |= newly
+            self.dynamic_blocked |= newly
+            self.cells_blocked_total = len(self.dynamic_blocked)
+            self.fields_dirty = True
+        return newly
+
+    def summary(self) -> dict:
+        return {**super().summary(), "origin": list(self.origin), "affected_cells": len(self.affected)}
+
+
+class FloodDisaster(BaseDisaster):
+    """Flood: water rises from the lowest cells upward over time."""
+
+    type = "flood"
+
+    def __init__(self, spec, floor, rng, width, height) -> None:  # noqa: ANN001
+        super().__init__(spec, floor, rng)
+        self.width = width
+        self.height = height
+        self.flooded: set[tuple[int, int]] = set()
+
+    def step(self, t: float, dt: float, occupants) -> set[tuple[int, int]]:  # noqa: ANN001
+        del dt, occupants
+        level = t * (0.08 + 0.25 * self.intensity)
+        cutoff_y = (self.height - 1) - int(level)
+        newly: set[tuple[int, int]] = set()
+        for cell in self.floor:
+            if cell[1] >= cutoff_y and cell not in self.flooded:
+                newly.add(cell)
+        if newly:
+            self.flooded |= newly
+            self.dynamic_blocked |= newly
+            self.cells_blocked_total = len(self.dynamic_blocked)
+            self.fields_dirty = True
+        return newly
+
+    def summary(self) -> dict:
+        return {**super().summary(), "flooded_cells": len(self.flooded)}
+
+
+class PowerOutageDisaster(BaseDisaster):
+    """Power outage: movement slows globally, reaction times increase."""
+
+    type = "power_outage"
+
+    def __init__(self, spec, floor, rng) -> None:  # noqa: ANN001
+        super().__init__(spec, floor, rng)
+        self.speed_multiplier = 1.0 / (1.0 + 0.8 * self.intensity)
+        self.delay_extension = 10.0 * self.intensity
+        self._applied = False
+
+    def step(self, t: float, dt: float, occupants) -> set[tuple[int, int]]:  # noqa: ANN001
+        del dt
+        if not self._applied and t >= 1.0:
+            from app.simulation.occupant import STATUS_WAITING
+
+            for occ in occupants:
+                if occ.status == STATUS_WAITING:
+                    occ.reaction_delay_s += self.delay_extension
+            self._applied = True
+        return set()
+
+    def speed_factor(self, cell: tuple[int, int]) -> float:  # noqa: ARG002
+        return self.speed_multiplier
+
+    def summary(self) -> dict:
+        return {
+            **super().summary(),
+            "speed_multiplier": round(self.speed_multiplier, 3),
+            "delay_extension_s": round(self.delay_extension, 1),
+        }
+
+
 def create_disaster(spec: DisasterSpec, floor, rng, dist_fields, exits, width, height):  # noqa: ANN001
     """Factory: build the disaster model for a scenario spec (or None)."""
     if spec.type == "fire":
@@ -253,4 +358,10 @@ def create_disaster(spec: DisasterSpec, floor, rng, dist_fields, exits, width, h
         return EarthquakeDisaster(spec, floor, rng, dist_fields, exits)
     if spec.type == "stampede":
         return StampedeDisaster(spec, floor, rng)
+    if spec.type == "gas_leak":
+        return GasLeakDisaster(spec, floor, rng, dist_fields, width, height)
+    if spec.type == "flood":
+        return FloodDisaster(spec, floor, rng, width, height)
+    if spec.type == "power_outage":
+        return PowerOutageDisaster(spec, floor, rng)
     return None

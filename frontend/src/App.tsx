@@ -4,6 +4,7 @@ import AdvisorPage from './pages/AdvisorPage'
 import RestorePointsPage from './pages/RestorePointsPage'
 import BuildingEditorPage from './pages/BuildingEditorPage'
 import ComparePage from './pages/ComparePage'
+import DisasterReadinessPage from './pages/DisasterReadinessPage'
 import MethodologyPage from './pages/MethodologyPage'
 import ExperimentsPage from './pages/ExperimentsPage'
 import HomePage from './pages/HomePage'
@@ -36,6 +37,7 @@ export default function App() {
         <div className="section-label">Analysis</div>
         <NavLink to="/runs">Runs</NavLink>
         <NavLink to="/compare">Compare</NavLink>
+        <NavLink to="/disaster-readiness">Disaster Readiness</NavLink>
         <NavLink to="/experiments">Experiments</NavLink>
         <NavLink to="/advisor">AI Advisor</NavLink>
         <NavLink to="/accuracy">System Accuracy</NavLink>
@@ -62,6 +64,7 @@ export default function App() {
           <Route path="/runs" element={<RunsPage />} />
           <Route path="/runs/:id" element={<RunViewPage />} />
           <Route path="/compare" element={<ComparePage />} />
+          <Route path="/disaster-readiness" element={<DisasterReadinessPage />} />
           <Route path="/experiments" element={<ExperimentsPage />} />
           <Route path="/accuracy" element={<AccuracyPage />} />
           <Route path="/methodology" element={<MethodologyPage />} />

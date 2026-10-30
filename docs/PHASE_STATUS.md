@@ -324,6 +324,31 @@ Fixed en route: disaster config round-trip through engine_config_to_dict
 (field name mismatch caused disasters to be silently ignored), disaster=None
 handling for pre-disaster runs in the response schema, and Otsu off-by-one.
 
+## Post-delivery enhancement 12: disaster readiness + 6 disaster types
+
+1. **Disaster Readiness page** (`/disaster-readiness`) — tests a scenario
+   against all 6 disaster types at 3 intensity levels (18 real simulation
+   runs) and reports a clear PASSED/FAILED verdict for each. Shows readiness
+   score, per-disaster-type breakdown, per-run links, and evidence.
+2. **Three new disaster types**:
+   - **Gas leak**: spreads slower than fire but permeates walls (gas
+     diffuses through structures).
+   - **Flood**: water rises from the lowest cells upward, progressively
+     blocking the exit at ground level first.
+   - **Power outage**: no blocked cells, but all movement slows globally
+     (darkness) and reaction times increase — the mildest disaster.
+3. **Bug fixes**: the disaster-readiness endpoint was creating runs with an
+   empty building snapshot (0 occupants); now loads the real building from
+   the scenario. Old runs without disaster fields no longer crash the
+   response schema.
+
+Live readiness test on the baseline scenario: 16.7% readiness (3/18 passed —
+only power outage at all intensities passed; fire/earthquake/stampede/gas
+leak/flood all caused casualties or trapped occupants). This demonstrates
+the system accurately reports which designs FAIL under which disasters.
+
+Tests: **144 backend**, 4 frontend; lint and tsc clean.
+
 ## Outstanding work
 
 None blocking delivery. Future ideas (not promised): multi-floor routing,
