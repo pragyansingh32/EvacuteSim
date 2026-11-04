@@ -19,12 +19,12 @@ export const STATUS_COLORS = ['#94a3b8', '#6366f1', '#f59e0b', '#10b981', '#a78b
 export const STATUS_NAMES = ['Waiting', 'Moving', 'At exit', 'Evacuated', 'Unreachable', 'Incapacitated']
 
 export const ZONE_PALETTE = [
-  'rgba(37, 99, 235, 0.15)',
-  'rgba(220, 38, 38, 0.14)',
-  'rgba(22, 163, 74, 0.15)',
-  'rgba(217, 119, 6, 0.16)',
-  'rgba(124, 58, 237, 0.15)',
-  'rgba(8, 145, 178, 0.15)',
+  'rgba(37, 53, 89, 0.12)',
+  'rgba(196, 43, 43, 0.1)',
+  'rgba(27, 127, 78, 0.12)',
+  'rgba(180, 83, 9, 0.13)',
+  'rgba(124, 58, 237, 0.11)',
+  'rgba(8, 145, 178, 0.12)',
 ]
 
 export interface ExitPulse {
