@@ -729,3 +729,11 @@ details summary { cursor: pointer; }
   min-height: 1.2em;
   max-width: 100%;
 }
+
+/* Editor map: white canvas in both themes for wall/color visibility */
+.editor-map .map-wrap {
+  background: #F8F8F8 !important;
+}
+.editor-map .map-wrap svg {
+  background: #F8F8F8;
+}

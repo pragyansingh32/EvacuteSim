@@ -55,6 +55,8 @@ interface GridCanvasProps {
   /** Editor brush footprint (square of this size previewed around the cursor). */
   brushSize?: number
   showZoneFill?: boolean
+  /** Per-zone fill colors — overrides ZONE_PALETTE when provided */
+  zoneColors?: string[]
 }
 
 export default function GridCanvas({
@@ -74,6 +76,7 @@ export default function GridCanvas({
   interactive = false,
   brushSize = 1,
   showZoneFill = true,
+  zoneColors,
 }: GridCanvasProps) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const paintingRef = useRef(false)
@@ -190,7 +193,9 @@ export default function GridCanvas({
         continue
       }
       const zoneFill =
-        zoneIdx !== undefined && showZoneFill ? ZONE_PALETTE[zoneIdx % ZONE_PALETTE.length] : null
+        zoneIdx !== undefined && showZoneFill
+          ? (zoneColors?.[zoneIdx] ?? ZONE_PALETTE[zoneIdx % ZONE_PALETTE.length])
+          : null
       floorRects.push(
         <rect
           key={key}

@@ -80,6 +80,14 @@ export default function BuildingEditorPage() {
   const redoStack = useRef<EditorState[]>([])
   const savedSnapshot = useRef<string>('')
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([])
+  const [zoneColors, setZoneColors] = useState<string[]>([
+    'rgba(37, 99, 235, 0.15)',
+    'rgba(220, 38, 38, 0.14)',
+    'rgba(22, 163, 74, 0.15)',
+    'rgba(217, 119, 6, 0.16)',
+    'rgba(124, 58, 237, 0.15)',
+    'rgba(8, 145, 178, 0.15)',
+  ])
 
   const markDirty = useCallback(() => setDirty(true), [])
 
@@ -319,6 +327,29 @@ export default function BuildingEditorPage() {
     markDirty()
   }
 
+  function zoneColorHex(idx: number): string {
+    const rgba = zoneColors[idx] ?? 'rgba(99, 99, 235, 0.15)'
+    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+    if (match) {
+      const r = Number(match[1])
+      const g = Number(match[2])
+      const b = Number(match[3])
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
+    }
+    return '#6366f1'
+  }
+
+  function setZoneColor(idx: number, hex: string) {
+    setZoneColors((prev) => {
+      const next = [...prev]
+      const r = parseInt(hex.slice(1, 3), 16)
+      const g = parseInt(hex.slice(3, 5), 16)
+      const b = parseInt(hex.slice(5, 7), 16)
+      next[idx] = 'rgba(' + r + ', ' + g + ', ' + b + ', 0.18)'
+      return next
+    })
+  }
+
   function deleteZone(idx: number) {
     pushUndo()
     setState((prev) => ({ ...prev, zones: prev.zones.filter((_, i) => i !== idx) }))
@@ -512,6 +543,7 @@ export default function BuildingEditorPage() {
               cellPx={cellPx}
               onPaint={onPaint}
               onHover={setHover}
+              zoneColors={zoneColors}
             />
           </div>
           <div className="status-bar">
@@ -556,6 +588,13 @@ export default function BuildingEditorPage() {
                 </button>
                 <input value={z.name} onChange={(e) => renameZone(i, e.target.value)} aria-label={`Zone ${z.id} name`} />
                 <span className="muted">{z.cells.length}</span>
+                <input
+                  type="color"
+                  value={zoneColorHex(i)}
+                  onChange={(e) => setZoneColor(i, e.target.value)}
+                  title={`Color for ${z.name}`}
+                  style={{ width: 28, height: 28, padding: 0, border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer' }}
+                />
                 <button className="small secondary" onClick={() => deleteZone(i)} title="Delete zone">
                   ✕
                 </button>
