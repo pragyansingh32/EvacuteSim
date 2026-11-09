@@ -33,18 +33,23 @@ Requires Python 3.12+ and Node 20+.
 
 ```bash
 python -m venv .venv
-.venv/bin/pip install -e "backend[dev]"      # Windows: .venv\Scripts\pip
-cd frontend && npm install
+# Windows: .\.venv\Scripts\pip install -e ".[dev]"
+cd frontend
+npm install
 ```
 
 Run the backend and the frontend dev server in two terminals:
 
 ```bash
-cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 8000
+.\.venv\Scripts\Activate.ps1
+&&
+python -m uvicorn app.main:app --port 8000
 ```
 
 ```bash
-cd frontend && npm run dev     # http://localhost:5173, proxies /api to :8000
+cd frontend
+&&
+npm run dev     # http://localhost:5173, proxies /api to :8000
 ```
 
 For a single process, run `npm run build` in `frontend/` and start only the
@@ -57,10 +62,13 @@ sample buildings and a few sample scenarios.
 ## Checks
 
 ```bash
-cd backend && ../.venv/bin/python -m pytest tests/
-cd backend && ../.venv/bin/ruff check app tests
-cd frontend && npm test
-cd frontend && npm run build      # type-check and bundle
+cd backend
+ python -m pytest tests/
+ python -m ruff check app tests
+
+cd frontend
+ npm test
+ npm run build      # type-check and bundle
 ```
 
 ## Docs
