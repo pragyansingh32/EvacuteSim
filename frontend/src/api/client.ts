@@ -1,4 +1,4 @@
-// Typed API client. Every UI result comes from these calls — the frontend
+// Typed API client. Every UI result comes from these calls - the frontend
 // never fabricates simulation outcomes.
 
 import type {

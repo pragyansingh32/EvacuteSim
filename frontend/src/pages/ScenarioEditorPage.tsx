@@ -171,7 +171,7 @@ export default function ScenarioEditorPage() {
           {building?.zones.map((z) => (
             <label className="field" key={z.id}>
               <span className="lbl">
-                {z.name} ({z.id}) — {z.cells.length} cells
+                {z.name} ({z.id}) - {z.cells.length} cells
               </span>
               <input
                 type="number"
@@ -386,7 +386,7 @@ export default function ScenarioEditorPage() {
               </select>
             </div>
             {(config.disasters ?? []).length === 0 && (
-              <div className="muted">No disasters — normal evacuation. Add one or more to test under stress.</div>
+              <div className="muted">No disasters - normal evacuation. Add one or more to test under stress.</div>
             )}
           </div>
 

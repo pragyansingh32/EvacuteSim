@@ -21,14 +21,14 @@ evacuate/
 │   │   ├── repositories/    Thin persistence functions per entity
 │   │   ├── db/              Engine/session management
 │   │   └── core/            Settings, errors, logging
-│   └── tests/               Pytest suite (79 tests)
+│   └── tests/               Pytest suite 
 ├── frontend/                React 19 + TypeScript + Vite
 │   └── src/
 │       ├── api/client.ts    Typed fetch client (single source of backend access)
 │       ├── components/      GridCanvas (SVG renderer), shared UI
 │       └── pages/           Home, BuildingEditor, ScenarioEditor, Library, Runs, RunView,
 │                            Compare, Experiments
-├── docs/                    The nine required documents
+├── docs/                    Design notes
 ├── scripts/                 PowerShell + bash developer scripts
 └── data/                    SQLite database (created at runtime)
 ```
@@ -40,7 +40,7 @@ evacuate/
 2. `api/` routers validate (Pydantic) and delegate; business rules live in
    `services/`; queries live in `repositories/`.
 3. The frontend only talks to `/api/v1`. Every number displayed comes from a
-   recorded run — there are no hardcoded metrics.
+   recorded run - there are no hardcoded metrics.
 
 ## Request flow for a simulation run
 
@@ -95,7 +95,7 @@ Converts an uploaded floor plan into a grid **draft** (walls only):
 The draft is handed to the building editor (router state + sessionStorage
 fallback), where the user cleans noise, places exits and zones, and saves
 through the normal validated building API. The import never creates a
-runnable building by itself — exits and zones are human decisions.
+runnable building by itself - exits and zones are human decisions.
 
 ## Computation limits (settings, all overridable via env)
 
@@ -107,7 +107,7 @@ resolve the fastest occupant: `dt ≤ cell_size / max_speed` (0.25 s default at
 
 ## Frontend architecture
 
-- React Router pages; no global state library — server state via typed fetches.
+- React Router pages; no global state library - server state via typed fetches.
 - `GridCanvas` renders walls/zones/exits/blocked overlays/congestion heat and
   occupant dots with status colors from one frame object.
 - Recharts renders the evacuation timeline, exit utilization, and experiment
@@ -119,5 +119,5 @@ resolve the fastest occupant: `dt ≤ cell_size / max_speed` (0.25 s default at
 
 - Development: backend `uvicorn app.main:app --reload --port 8000` + frontend
   `npm run dev` (Vite on :5173 proxies `/api`).
-- Demo/production: `npm run build`, then just run uvicorn — the built app is
+- Demo/production: `npm run build`, then just run uvicorn - the built app is
   served from `frontend/dist` with SPA routing support.

@@ -3,7 +3,7 @@
 Parses LINE, LWPOLYLINE, and CIRCLE entities from an ASCII DXF file (the
 format AutoCAD-compatible tools export by default when saving ASCII DXF),
 converts the geometry into line segments, and rasterizes them onto the grid
-with Bresenham's line algorithm — wall lines become 1-cell-thick walls.
+with Bresenham's line algorithm - wall lines become 1-cell-thick walls.
 
 Scope and limits (documented in KNOWN_LIMITATIONS.md):
 
@@ -169,7 +169,7 @@ def import_from_dxf(data: bytes, params: ImportParams, name: str) -> ImportResul
     if not segments:
         raise ValueError(
             "No LINE / LWPOLYLINE / CIRCLE geometry found in the DXF. "
-            "This converter reads ASCII DXF only — make sure the file is a "
+            "This converter reads ASCII DXF only - make sure the file is a "
             "plain-text DXF and contains model-space wall lines."
         )
 

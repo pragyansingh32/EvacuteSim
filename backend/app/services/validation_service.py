@@ -4,7 +4,7 @@ A set of building designs whose correct evacuation outcome is KNOWN in advance
 by construction (sealed rooms, blocked exits, doors too small for the crowd,
 distances longer than the horizon, adequate designs). The battery runs every
 case through the real engine and checks whether the system classifies it
-correctly — this is the project's own accuracy measurement, surfaced in the UI
+correctly - this is the project's own accuracy measurement, surfaced in the UI
 on the Accuracy page.
 
 Expectations are derived analytically:
@@ -12,7 +12,7 @@ Expectations are derived analytically:
 - door lower bound:    population / capacity (persons per second)
 A design PASSes only if everyone evacuates within the horizon; it FAILs when
 geometry or capacity makes that impossible. The battery asserts the system
-reports exactly that — no more, no less.
+reports exactly that - no more, no less.
 """
 
 from __future__ import annotations
@@ -241,7 +241,7 @@ def case_slow_occupants_generous() -> CaseResult:
 
 
 # ---------------------------------------------------------------------------
-# FAIL cases: the system must honestly report these designs do NOT evacuate.
+# FAIL cases: the system must report these designs do NOT evacuate.
 # ---------------------------------------------------------------------------
 
 def case_sealed_zone() -> CaseResult:
@@ -293,7 +293,7 @@ def case_all_exits_blocked() -> CaseResult:
             grid, config(zone_populations={"Z": 2}, blocked_exit_ids={"E"})
         ).run()
         passed = False
-        actual = f"engine ran and returned {result.status} — it should have refused"
+        actual = f"engine ran and returned {result.status} - it should have refused"
         evidence = _summarize(result)
     except Exception as exc:  # noqa: BLE001 - any refusal counts, message checked
         message = str(exc).lower()
@@ -594,6 +594,6 @@ def run_battery() -> dict:
             "Expected outcomes are derived analytically from geometry and door "
             "capacity, then compared with what the system reported.",
             "This battery validates the SYSTEM's classification of designs, not "
-            "real-world safety; see docs/RESEARCH_METHODOLOGY.md.",
+            "real-world safety.",
         ],
     }

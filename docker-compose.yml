@@ -1,7 +1,4 @@
-# Optional reproducibility helper: backend (with built frontend baked in via
-# a separate build stage is overkill locally — compose runs the backend and
-# the Vite dev server side by side). For the simplest demo, run the backend
-# natively with frontend/dist present.
+# Backend plus the Vite dev server, side by side.
 services:
   backend:
     build:
@@ -17,7 +14,7 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
-    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host"
+    command: sh -c "npm ci && npm run dev -- --host"
     ports:
       - "5173:5173"
     depends_on:

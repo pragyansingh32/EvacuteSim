@@ -21,7 +21,7 @@ if (-not (Test-Path $venvPython)) {
     python -m venv (Join-Path $root ".venv")
 }
 Write-Host "Installing backend dependencies..."
-& $venvPython -m pip install --quiet fastapi "uvicorn[standard]" "pydantic==2.12.5" pydantic-settings sqlalchemy numpy pytest httpx ruff
+& $venvPython -m pip install --quiet -e "$($root)\backend[dev]"
 if ($LASTEXITCODE -ne 0) { throw "pip install failed" }
 
 # --- Frontend deps ---

@@ -34,7 +34,7 @@ def test_battery_fail_cases_actually_fail_in_engine():
     for case in fail_cases:
         evidence = case["evidence"]
         outcome = evidence.get("engine_status")
-        # Honest failure modes: refused, incomplete, or unreachable detected.
+        # Failure modes: refused, incomplete, or unreachable detected.
         assert (
             outcome == "incomplete"
             or evidence.get("unreachable", 0) > 0

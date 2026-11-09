@@ -1,7 +1,7 @@
 """Disaster scenario models: fire, earthquake, stampede.
 
 Each disaster is a documented, deliberately simplified process that evolves
-DURING the simulation — unlike the static route blocking of a basic scenario.
+DURING the simulation - unlike the static route blocking of a basic scenario.
 All models share the same interface so the engine treats them uniformly:
 
 - ``step(t, dt, occupants)`` advances the disaster and returns the set of
@@ -80,7 +80,7 @@ class FireDisaster(BaseDisaster):
     - the origin is automatic: the floor cell FARTHEST from every exit (the
       worst case for early detection) unless the scenario pins one.
     - smoke permeates the plan: the radius ignores walls (documented
-      simplification — no CFD, no doors slowing smoke).
+      simplification - no CFD, no doors slowing smoke).
     """
 
     type = "fire"
@@ -139,7 +139,7 @@ class EarthquakeDisaster(BaseDisaster):
     - collapse_time = 30 - 20 * intensity seconds (higher intensity -> earlier).
     - At collapse, N floor cells become debris: N = round(intensity^2 * 0.12 *
       floor_count), chosen from cells sorted by proximity to the nearest exit
-      (structural damage concentrates at exits and doorways first — a
+      (structural damage concentrates at exits and doorways first - a
       documented simplification). Exit cells themselves can be debris.
     - Occupants standing on debris are incapacitated (crushed); occupants not
       yet moving get their reaction delay extended by 25 * intensity seconds
@@ -247,7 +247,7 @@ class StampedeDisaster(BaseDisaster):
 
 class GasLeakDisaster(BaseDisaster):
     """Toxic gas leak: spreads through walls (gas permeates everything) and
-    is invisible — occupants don't re-route until the gas reaches their area."""
+    is invisible - occupants don't re-route until the gas reaches their area."""
 
     type = "gas_leak"
 

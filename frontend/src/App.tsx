@@ -39,7 +39,7 @@ export default function App() {
         <NavLink to="/compare">Compare</NavLink>
         <NavLink to="/disaster-readiness">Disaster Readiness</NavLink>
         <NavLink to="/experiments">Experiments</NavLink>
-        <NavLink to="/advisor">AI Advisor</NavLink>
+        <NavLink to="/advisor">Advisor</NavLink>
         <NavLink to="/accuracy">System Accuracy</NavLink>
         <NavLink to="/methodology">Methodology</NavLink>
         <div className="section-label">System</div>

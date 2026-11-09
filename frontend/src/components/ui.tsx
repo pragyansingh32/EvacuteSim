@@ -8,7 +8,7 @@ export function DisclaimerBanner({ children }: { children?: ReactNode }) {
   return (
     <div className="disclaimer">
       {children ??
-        'Simulation outputs depend on model assumptions. EvacuateSim is an educational/research tool — not a certified fire-safety system and not a safety prediction for any real building.'}
+        'Simulation outputs depend on model assumptions. EvacuateSim is an educational/research tool - not a certified fire-safety system and not a safety prediction for any real building.'}
     </div>
   )
 }
@@ -31,7 +31,7 @@ export function MetricCard({
   return (
     <div className={`card metric-card${tone && tone !== 'accent' ? ` tone-${tone}` : ''}`}>
       <div className="label">{label}</div>
-      <div className="value">{value ?? '—'}</div>
+      <div className="value">{value ?? '-'}</div>
       {hint && <div className="hint">{hint}</div>}
     </div>
   )
@@ -72,6 +72,6 @@ export function fmtBytes(bytes: number): string {
 }
 
 export function fmt(v: number | null | undefined, digits = 1): string {
-  if (v == null) return '—'
+  if (v == null) return '-'
   return v.toFixed(digits)
 }

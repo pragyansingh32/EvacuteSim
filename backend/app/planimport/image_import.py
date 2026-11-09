@@ -3,7 +3,7 @@
 Algorithm (deliberately simple and explainable):
 
 1. Decode the image with Pillow, convert to 8-bit grayscale, and pick the
-   ink/paper threshold — either the user's value or automatically via Otsu's
+   ink/paper threshold - either the user's value or automatically via Otsu's
    method (maximizes between-class variance in the grayscale histogram).
 2. Binarize at FULL resolution (keeps thin wall lines that mean-based
    downscaling would erase), then crop to the drawn content (removes scanner
@@ -27,7 +27,7 @@ from app.planimport.common import ImportParams, ImportResult, finish_grid
 
 
 def otsu_threshold(histogram: list[int]) -> int:
-    """Otsu 1979: the threshold maximizing between-class variance — the
+    """Otsu 1979: the threshold maximizing between-class variance - the
     standard automatic ink/paper separator for scanned plans."""
     total = sum(histogram)
     if total == 0:

@@ -51,7 +51,7 @@ export default function RunsPage() {
                   <td>
                     <StatusBadge status={r.status} />
                   </td>
-                  <td className="muted">{r.finished_at ? new Date(r.finished_at).toLocaleTimeString() : '—'}</td>
+                  <td className="muted">{r.finished_at ? new Date(r.finished_at).toLocaleTimeString() : '-'}</td>
                 </tr>
               ))}
             </tbody>

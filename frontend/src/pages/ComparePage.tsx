@@ -191,5 +191,5 @@ export default function ComparePage() {
 }
 
 function fmtN(v: number | null | undefined, digits = 1): string {
-  return v == null ? '—' : v.toFixed(digits)
+  return v == null ? '-' : v.toFixed(digits)
 }

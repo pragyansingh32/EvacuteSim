@@ -165,7 +165,7 @@ export default function BuildingEditorPage() {
       }
       const next: EditorState = {
         name: String(source.name ?? 'Imported building'),
-        description: 'Imported plan draft — review walls, then add exits and zones.',
+        description: 'Imported plan draft - review walls, then add exits and zones.',
         width: source.width as number,
         height: source.height as number,
         cell_size_m: (source.cell_size_m as number) || 0.5,
@@ -387,7 +387,7 @@ export default function BuildingEditorPage() {
       exits: prev.exits.filter((e) => e.x < width && e.y < height),
       zones: prev.zones.map((z) => ({ ...z, cells: z.cells.filter(([x, y]) => x < width && y < height) })),
     }))
-    setInfo('Grid resized — the border was regenerated; interior walls were cleared.')
+    setInfo('Grid resized - the border was regenerated; interior walls were cleared.')
     markDirty()
   }
 
@@ -459,7 +459,7 @@ export default function BuildingEditorPage() {
           <h1>Building Editor</h1>
           <p className="page-sub">
             Paint walls and floor, place exits, define starting zones. One cell ={' '}
-            {state.cell_size_m} m — the floor is {(state.cell_size_m * state.width).toFixed(1)} m ×{' '}
+            {state.cell_size_m} m - the floor is {(state.cell_size_m * state.width).toFixed(1)} m ×{' '}
             {(state.cell_size_m * state.height).toFixed(1)} m.
           </p>
         </div>
@@ -549,7 +549,7 @@ export default function BuildingEditorPage() {
           <div className="status-bar">
             <span>
               <strong>{TOOLS.find((t) => t.id === tool)?.label}</strong>
-              {hover ? ` @ (${hover[0]}, ${hover[1]})` : ' — hover the map'}
+              {hover ? ` @ (${hover[0]}, ${hover[1]})` : ' - hover the map'}
             </span>
             <span>
               {state.width}×{state.height} cells · {cellPx} px/cell
@@ -568,7 +568,7 @@ export default function BuildingEditorPage() {
         {/* ---- side panel ---- */}
         <div className="editor-side">
           <div className="card">
-            <h3>Zones — occupant starting areas</h3>
+            <h3>Zones - occupant starting areas</h3>
             {state.zones.length === 0 && (
               <div className="muted" style={{ marginBottom: 8 }}>
                 No zones yet. Add one, then paint it on the map with the Zone tool.
@@ -609,7 +609,7 @@ export default function BuildingEditorPage() {
             <h3>Exits ({state.exits.length})</h3>
             {state.exits.length === 0 && (
               <div className="muted" style={{ marginBottom: 8 }}>
-                Place exits with the Exit tool (⇥) — click a floor or border cell.
+                Place exits with the Exit tool (⇥) - click a floor or border cell.
               </div>
             )}
             {state.exits.map((e) => (

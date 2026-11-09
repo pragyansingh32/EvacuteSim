@@ -107,7 +107,7 @@ class TestDrawioImport:
 
     def test_compressed_full_file_with_trailing_tags(self):
         """Real exports: the compressed payload sits inside <diagram> and the
-        file has trailing markup after </mxGraphModel> — extraction must
+        file has trailing markup after </mxGraphModel> - extraction must
         tolerate it (the model is found, not parsed as one document)."""
         model = ROOM_PLAN[ROOM_PLAN.index("<mxGraphModel"):]
         model = model[: model.rindex("</mxGraphModel>") + len("</mxGraphModel>")]

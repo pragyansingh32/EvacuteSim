@@ -50,7 +50,7 @@ app = FastAPI(
     description=(
         "EvacuateSim: an explainable, uncertainty-aware emergency evacuation "
         "simulation and scenario optimization platform. Educational/research "
-        "tool — NOT a certified fire-safety system; outputs are model-based "
+        "tool - NOT a certified fire-safety system; outputs are model-based "
         "simulations, not safety predictions."
     ),
     lifespan=lifespan,

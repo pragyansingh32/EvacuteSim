@@ -4,8 +4,8 @@
 // their recorded status codes. It never invents movement.
 //
 // Two render modes:
-//   editor    (default) — crisp per-cell strokes for precise painting.
-//   cinematic — merged rounded walls (goo filter), glowing occupant dots with
+//   editor    (default) - crisp per-cell strokes for precise painting.
+//   cinematic - merged rounded walls (goo filter), glowing occupant dots with
 //               CSS-transform interpolation between frames (smooth glide),
 //               fade-out ghosts for occupants that evacuated, exit glow, and
 //               soft congestion blur. Used by the run playback view.
@@ -39,7 +39,7 @@ interface GridCanvasProps {
   blockedCells?: [number, number][]
   congestion?: Record<string, number>
   frame?: Frame | null
-  /** Frame immediately before `frame` — used to fade out evacuated occupants. */
+  /** Frame immediately before `frame` - used to fade out evacuated occupants. */
   previousFrame?: Frame | null
   /** Duration of the glide to the current frame's positions, in ms. */
   transitionMs?: number
@@ -55,7 +55,7 @@ interface GridCanvasProps {
   /** Editor brush footprint (square of this size previewed around the cursor). */
   brushSize?: number
   showZoneFill?: boolean
-  /** Per-zone fill colors — overrides ZONE_PALETTE when provided */
+  /** Per-zone fill colors - overrides ZONE_PALETTE when provided */
   zoneColors?: string[]
 }
 
@@ -298,7 +298,7 @@ export default function GridCanvas({
         >
           {blocked ? '✕' : exit.id}
         </text>
-        <title>{`Exit ${exit.id} — capacity ${exit.capacity_pps} p/s${blocked ? ' (BLOCKED in this scenario)' : ''}`}</title>
+        <title>{`Exit ${exit.id} - capacity ${exit.capacity_pps} p/s${blocked ? ' (BLOCKED in this scenario)' : ''}`}</title>
       </g>
     )
   })
@@ -324,7 +324,7 @@ export default function GridCanvas({
           fill={STATUS_COLORS[status] ?? '#334155'}
           filter={cinematic ? 'url(#dot-glow)' : undefined}
         >
-          {!ghost && <title>{`Occupant ${id} — ${STATUS_NAMES[status] ?? status}`}</title>}
+          {!ghost && <title>{`Occupant ${id} - ${STATUS_NAMES[status] ?? status}`}</title>}
         </circle>
       </g>
     )

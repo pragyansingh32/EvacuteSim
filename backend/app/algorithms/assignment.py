@@ -7,8 +7,8 @@ their zone, in a deterministic order) and give each to the exit whose
     finish(exit) = mean_travel_time(zone -> exit) + (assigned_count + 1) / capacity
 
 This water-filling naturally sends more people to high-capacity, nearby exits
-and throttles assignment to overloaded ones. It is a heuristic — it does not
-solve the assignment problem optimally — and travel times use a single
+and throttles assignment to overloaded ones. It is a heuristic - it does not
+solve the assignment problem optimally - and travel times use a single
 reference speed because individual speeds are unknown at assignment time.
 """
 

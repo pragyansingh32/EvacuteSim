@@ -11,23 +11,23 @@ starts (cost: one BFS per exit over ≤ 14,400 cells). Path extraction is
 implicit: an occupant moves to the neighbor with the smallest remaining
 distance (deterministic tie-break N, E, S, W), so no per-occupant path
 storage is needed. Cells removed by a scenario (blocked exits/cells) are
-excluded before the fields are computed — closed routes are structurally
+excluded before the fields are computed - closed routes are structurally
 unusable.
 
 Complexity: O(exits × cells) time once per run; O(1) per movement decision.
 
 ## Routing strategies
 
-`app/algorithms/strategies.py` — all strategies share the identical movement
+`app/algorithms/strategies.py` - all strategies share the identical movement
 machinery; they differ **only** in exit choice, which is what makes
 comparisons fair.
 
-### Strategy A — `nearest_exit` (baseline)
+### Strategy A - `nearest_exit` (baseline)
 
 Pick the reachable exit with the minimal BFS distance; ties break by exit id
 in sorted order. Assigned once at spawn; never revisited.
 
-### Strategy B — `capacity_aware`
+### Strategy B - `capacity_aware`
 
 Minimize the estimated total time:
 
@@ -36,14 +36,14 @@ cost(exit) = dist(exit, cell) × cell_size / speed
            + live_load(exit) / capacity(exit)
 ```
 
-`live_load` counts occupants currently routed to that exit and still inside —
+`live_load` counts occupants currently routed to that exit and still inside -
 a deliberately simple, explainable queue proxy, not a calibrated flow model.
 Re-evaluated every 8 steps (2 s at default dt) with a 10 % improvement
 hysteresis to prevent oscillation between near-equivalent exits. Because
 assignments accumulate during spawn processing, the population naturally
 spreads across doors as loads build up.
 
-### Strategy C — `balanced_assignment`
+### Strategy C - `balanced_assignment`
 
 A pre-computed greedy **min-makespan assignment** of each zone's population
 across exits (`app/algorithms/assignment.py`). Process occupants one at a
@@ -57,7 +57,7 @@ This water-filling favors high-capacity, nearby doors and throttles assignment
 to overloaded ones. Per-occupant assignment deals the zone's exit counts to
 occupants in a seeded shuffled order. Travel times use a single reference
 speed (the distribution mean) because individual speeds are unknown at
-assignment time — a documented approximation.
+assignment time - a documented approximation.
 
 If an occupant's assigned exit is unreachable from its cell (possible for
 spilled occupants or zones straddling walls), the occupant **falls back** to

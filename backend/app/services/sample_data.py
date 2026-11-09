@@ -154,7 +154,7 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
             "building_id": office_id,
             "name": "Sample: Baseline evacuation (nearest exit)",
             "description": (
-                "SYNTHETIC demonstration scenario — not based on a real building. "
+                "SYNTHETIC demonstration scenario - not based on a real building. "
                 "120 occupants, typical walking speeds, short pre-movement delay, "
                 "nearest-exit routing. Reproducible with seed 42."
             ),
@@ -164,7 +164,7 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
             "building_id": office_id,
             "name": "Sample: West exit blocked",
             "description": (
-                "SYNTHETIC demonstration scenario — same office and population as "
+                "SYNTHETIC demonstration scenario - same office and population as "
                 "the baseline, but exit EA is unavailable; everyone must reroute. "
                 "Reproducible with seed 42."
             ),
@@ -174,7 +174,7 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
             "building_id": office_id,
             "name": "Sample: Balanced exit assignment",
             "description": (
-                "SYNTHETIC demonstration scenario — same office and population as "
+                "SYNTHETIC demonstration scenario - same office and population as "
                 "the baseline, but the balanced-assignment strategy distributes "
                 "occupants across both exits. Reproducible with seed 42."
             ),
@@ -184,7 +184,7 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
             "building_id": office_id,
             "name": "Sample: Long pre-movement delay",
             "description": (
-                "SYNTHETIC demonstration scenario — occupants take 20-60 s to "
+                "SYNTHETIC demonstration scenario - occupants take 20-60 s to "
                 "start moving, testing the effect of reaction time. "
                 "Reproducible with seed 42."
             ),
@@ -196,7 +196,7 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
             "building_id": hall_id,
             "name": "Sample: Hall with slow occupants (capacity-aware)",
             "description": (
-                "SYNTHETIC demonstration scenario — assembly hall with 180 "
+                "SYNTHETIC demonstration scenario - assembly hall with 180 "
                 "slower occupants and unequal exit capacities, routed "
                 "capacity-aware. Reproducible with seed 7."
             ),
@@ -210,9 +210,9 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
         },
         {
             "building_id": office_id,
-            "name": "Sample: Fire (severe) — dynamic disaster",
+            "name": "Sample: Fire (severe) - dynamic disaster",
             "description": (
-                "SYNTHETIC demonstration scenario — same office as the baseline "
+                "SYNTHETIC demonstration scenario - same office as the baseline "
                 "but a fire ignites far from the exits and spreads during the "
                 "simulation, blocking cells and forcing re-routing. "
                 "Reproducible with seed 42."
@@ -225,9 +225,9 @@ def _sample_scenarios(building_id_by_name: dict[str, int]) -> list[dict]:
         },
         {
             "building_id": hall_id,
-            "name": "Sample: Earthquake (moderate) — dynamic disaster",
+            "name": "Sample: Earthquake (moderate) - dynamic disaster",
             "description": (
-                "SYNTHETIC demonstration scenario — the assembly hall with a "
+                "SYNTHETIC demonstration scenario - the assembly hall with a "
                 "moderate earthquake at ~22 s: debris blocks cells near the "
                 "exits and occupants are confused. Reproducible with seed 7."
             ),

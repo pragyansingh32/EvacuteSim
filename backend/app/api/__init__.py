@@ -1,1 +1,1 @@
-"""API layer: versioned routers. Thin — validation via schemas, work via services."""
+"""API layer: versioned routers. Thin - validation via schemas, work via services."""

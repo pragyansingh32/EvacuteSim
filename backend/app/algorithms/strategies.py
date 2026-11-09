@@ -7,11 +7,11 @@ decision.
 
 Three strategies are implemented:
 
-- ``nearest_exit``    — baseline: closest reachable exit by BFS distance.
-- ``capacity_aware``  — balances expected travel time against modeled door
+- ``nearest_exit``    - baseline: closest reachable exit by BFS distance.
+- ``capacity_aware``  - balances expected travel time against modeled door
   queues: cost = travel time + (current live load on exit) / capacity.
   Re-evaluated periodically as queues evolve.
-- ``balanced_assignment`` — a pre-computed greedy min-makespan assignment of
+- ``balanced_assignment`` - a pre-computed greedy min-makespan assignment of
   each zone's population across exits (see ``assignment.py``). Occupants keep
   their assigned exit; if it is unreachable from their cell they fall back to
   the nearest reachable one (recorded as ``fallback_used``).
@@ -82,7 +82,7 @@ class RoutingStrategy(ABC):
 
 
 class NearestExitStrategy(RoutingStrategy):
-    """Strategy A — the baseline: minimize BFS step distance to any reachable exit."""
+    """Strategy A - the baseline: minimize BFS step distance to any reachable exit."""
 
     name = STRATEGY_NEAREST
 
@@ -98,7 +98,7 @@ class NearestExitStrategy(RoutingStrategy):
 
 
 class CapacityAwareStrategy(RoutingStrategy):
-    """Strategy B — minimize estimated total time: walking + expected door queue.
+    """Strategy B - minimize estimated total time: walking + expected door queue.
 
     Expected queue time is approximated as (live load on the exit) / capacity,
     where live load counts occupants currently routed to that exit and still
@@ -147,7 +147,7 @@ class CapacityAwareStrategy(RoutingStrategy):
 
 
 class BalancedAssignmentStrategy(RoutingStrategy):
-    """Strategy C — occupants follow a pre-computed zone-to-exit assignment.
+    """Strategy C - occupants follow a pre-computed zone-to-exit assignment.
 
     The assignment itself is computed by ``assignment.balanced_zone_assignment``
     before the simulation starts. This class only resolves it per occupant and

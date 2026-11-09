@@ -8,12 +8,12 @@ from dataclasses import dataclass, field
 class ImportParams:
     """User-controlled conversion parameters.
 
-    target_width  — number of grid cells across the plan's larger dimension
+    target_width  - number of grid cells across the plan's larger dimension
                     (the other dimension follows the aspect ratio).
-    real_width_m  — real-world width of the plan in metres; sets cell size.
-    threshold     — image only: mean luminance (0-255) below which a cell
+    real_width_m  - real-world width of the plan in metres; sets cell size.
+    threshold     - image only: mean luminance (0-255) below which a cell
                     counts as wall. Lower = fewer walls.
-    invert        — image only: for plans drawn light-on-dark.
+    invert        - image only: for plans drawn light-on-dark.
     """
 
     target_width: int = 60
@@ -104,13 +104,13 @@ def finish_grid(
         )
     if ratio > 0.6:
         warnings.append(
-            f"Over 60% of the grid converted to walls ({ratio:.0%}) — the result "
+            f"Over 60% of the grid converted to walls ({ratio:.0%}) - the result "
             "is probably too dense to walk in. Try a higher threshold or enable "
             "invert if the plan is light-on-dark."
         )
     elif ratio < 0.02:
         warnings.append(
-            f"Only {ratio:.1%} of cells became walls — thin or faint lines may "
+            f"Only {ratio:.1%} of cells became walls - thin or faint lines may "
             "have been missed. Try a lower threshold."
         )
 
@@ -169,7 +169,7 @@ def suggested_scenario(draft: "ImportDraft", populations: dict[str, int]) -> dic
     dt = math.floor(min(0.25, draft.cell_size_m / speed_max) * 1000) / 1000
     max_duration = min(900.0, max(180.0, round((total / total_cap) * 2.5 + 60)))
     return {
-        "name": f"{draft.name} — auto scenario",
+        "name": f"{draft.name} - auto scenario",
         "description": (
             "Suggested by plan import: populations from the occupancy density, "
             "auto-detected exits with width-based capacities. Edit freely."

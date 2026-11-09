@@ -16,7 +16,7 @@ fi
 PY="$( [ -x ".venv/bin/python" ] && echo .venv/bin/python || echo .venv/Scripts/python.exe )"
 
 echo "Installing backend dependencies..."
-"$PY" -m pip install --quiet fastapi "uvicorn[standard]" "pydantic==2.12.5" pydantic-settings sqlalchemy numpy pytest httpx ruff
+"$PY" -m pip install --quiet -e "backend[dev]"
 
 if [ ! -d "frontend/node_modules" ]; then
   echo "Installing frontend dependencies (npm)..."

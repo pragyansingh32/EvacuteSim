@@ -2,7 +2,7 @@
 into an EvacuateSim grid draft.
 
 The conversion produces WALLS ONLY. It cannot know where doors, exits, or
-functional zones are — that semantics is added by the user in the editor.
+functional zones are - that semantics is added by the user in the editor.
 Every import result therefore carries explicit warnings stating this.
 """
 

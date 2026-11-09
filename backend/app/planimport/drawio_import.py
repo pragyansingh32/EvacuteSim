@@ -1,19 +1,19 @@
-"""draw.io (.drawio / .xml) diagram import — precise vector conversion.
+"""draw.io (.drawio / .xml) diagram import - precise vector conversion.
 
 draw.io stores plans as mxGraph XML: every shape is a vertex with exact
 coordinates and every line an edge. This importer converts that vector
-geometry DIRECTLY onto the simulation grid — no pixel guessing, so the
+geometry DIRECTLY onto the simulation grid - no pixel guessing, so the
 result matches the diagram exactly at the chosen grid resolution.
 
 Supported elements and rules (documented in docs/KNOWN_LIMITATIONS.md):
 
 - **Filled shapes** (`fillColor` explicitly set, not "none") become solid
   wall blocks.
-- **Unfilled shapes** (rectangles, ellipses, strokes) become wall OUTLINES —
+- **Unfilled shapes** (rectangles, ellipses, strokes) become wall OUTLINES -
   draw your rooms as unfilled rectangles and the walls are the borders.
 - **Edges (lines)** become wall segments along their waypoints; edges
   connected to shapes are routed through the shape centers.
-- **Text-only cells** (style ``text;``) are skipped — labels never become
+- **Text-only cells** (style ``text;``) are skipped - labels never become
   walls.
 - Stroke thickness converts to wall thickness in cells (round(px / cell)).
 - Doors/exits/zones/populations are then detected automatically by the same
@@ -117,7 +117,7 @@ def _collect_cells(xml_text: str) -> list[ET.Element]:
     model = root if root.tag == "mxGraphModel" else root.find(".//mxGraphModel")
     if model is None:
         raise ValueError(
-            "No mxGraphModel found — make sure this is a draw.io file "
+            "No mxGraphModel found - make sure this is a draw.io file "
             "(.drawio / .xml exported from diagrams.net)."
         )
     return list(model.iter("mxCell"))
@@ -138,7 +138,7 @@ def _cell_shapes(cells: list[ET.Element]) -> tuple[list[_Shape], int]:
                 continue
             # Edge points: ONLY explicit mxPoints (sourcePoint, waypoints,
             # targetPoint). The geometry x/y of an edge is a relative layout
-            # hint, not a coordinate — using it corrupts the geometry. Shape
+            # hint, not a coordinate - using it corrupts the geometry. Shape
             # references are ignored on purpose: an edge anchored to a room
             # shape is a connection, not a wall through the room.
             source_pt = None

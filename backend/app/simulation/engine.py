@@ -206,7 +206,7 @@ class EvacuationEngine:
 
         self._spawn_occupants()
 
-        # Disaster models (fire / earthquake / stampede / etc.) — multiple
+        # Disaster models (fire / earthquake / stampede / etc.) - multiple
         # disasters can be active simultaneously. Each evolves during the
         # run: blocks cells dynamically, incapacitates occupants caught in
         # the event, and forces live re-routing.
@@ -531,7 +531,7 @@ class EvacuationEngine:
 
     def _incapacitate_on(self, cells: set[tuple[int, int]]) -> None:
         """Occupants standing on cells destroyed by the disaster become
-        incapacitated — an honest casualty count, never silently dropped."""
+        incapacitated - a casualty count, never silently dropped."""
         for occ in self.occupants:
             if occ.status in INSIDE_STATUSES and occ.pos in cells:
                 occ.status = STATUS_INCAPACITATED

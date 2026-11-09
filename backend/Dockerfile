@@ -4,10 +4,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY backend/pyproject.toml backend/README* ./
+COPY backend/pyproject.toml ./
 COPY backend/app ./app
-RUN pip install --no-cache-dir fastapi "uvicorn[standard]" "pydantic==2.12.5" \
-    pydantic-settings sqlalchemy numpy
+RUN pip install --no-cache-dir .
 
 ENV EVACUATESIM_DATABASE_URL=sqlite:////data/evacuatesim.db
 VOLUME ["/data"]

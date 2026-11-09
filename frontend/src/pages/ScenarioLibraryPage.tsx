@@ -23,7 +23,7 @@ export default function ScenarioLibraryPage() {
       <h1>Scenario Library</h1>
       <p className="page-sub">
         Reproducible demonstration scenarios. Every sample below is{' '}
-        <strong>synthetic</strong> — generated from made-up building shapes and populations,
+        <strong>synthetic</strong> - generated from made-up building shapes and populations,
         not from measurements of any real building.
       </p>
       <DisclaimerBanner />

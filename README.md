@@ -1,121 +1,77 @@
 # EvacuateSim
 
-**An explainable, uncertainty-aware emergency evacuation simulation and
-scenario optimization platform.**
+A grid-based evacuation simulator. Draw (or import) a building layout, set up a
+population and a scenario, run a discrete-time simulation, and compare routing
+strategies across runs.
 
-EvacuateSim lets you draw a simplified building layout, configure a simulated
-population, define emergency scenarios, run a discrete-time evacuation
-simulation, and compare routing strategies — with recorded, reproducible
-evidence for every number shown.
+It is an educational tool. It is not a certified fire-safety system and its
+results say nothing about any real building. See
+[docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 
-> **Disclaimer.** EvacuateSim is an educational/research tool. It is **not** a
-> certified fire-safety system, and its outputs are **not** safety predictions
-> for any real building. Results depend on model assumptions documented in
-> [`docs/SIMULATION_MODEL.md`](docs/SIMULATION_MODEL.md).
+## What it does
 
-## Features
+- Building editor: paint walls, place exits with door capacities, define start zones.
+- Plan import: draw.io diagrams, images and ASCII DXF files are converted to a
+  grid, with doors, exits and zones detected automatically.
+- Scenario editor: population per zone, walking speed and reaction time
+  distributions, blocked exits, strategy, seed and run limits.
+- Simulation engine: discrete-time agents on a grid, door throughput queues,
+  fire, earthquake, stampede, gas leak, flood and power outage disasters.
+- Three routing strategies: nearest exit, capacity-aware, balanced assignment.
+- Run view with playback, evacuation timeline, T50/T90/T95 and exit utilization.
+- Compare runs side by side, and run parameter sweeps over several seeds with CSV export.
+- Advisor: a rule-based analysis of a finished run that proposes changes and
+  checks each one with a real test run.
+- Restore points for the whole workspace.
 
-- **Building editor** — paint walls/floor, place exits (with modeled door
-  capacities), define starting zones; server-side validation with warnings.
-- **Plan import** — upload an existing floor plan as a **draw.io diagram**
-  (.drawio/.xml — precise vector conversion), an image (PNG/JPG/..., with
-  Otsu auto-threshold and a visual fidelity overlay), or an ASCII DXF. Doors,
-  exits, zones, and populations are detected automatically; one click runs
-  the evacuation.
-- **Scenario editor** — populations per zone, walking-speed and reaction-time
-  distributions, blocked exits/cells, exit capacity overrides, strategy,
-  seed, and run limits.
-- **Real simulation engine** — discrete-time grid agents with movement-rate
-  accumulation, deterministic conflict resolution, door throughput queues,
-  and full mass-balance accounting. Pure Python, fully unit-tested.
-- **Three routing strategies** — nearest-exit baseline, capacity-aware, and
-  balanced exit assignment — comparable on identical conditions.
-- **Live run view** — polls real backend status, then plays back the frames
-  the engine actually recorded (play/pause/step/speed/congestion heatmap).
-- **Analytics & comparison** — evacuation timeline, T50/T90/T95, exit
-  utilization, congestion indicator, side-by-side strategy comparison.
-- **Experiments** — full-factorial parameter sweeps × seeds, all executed as
-  real runs, with a results table and CSV export.
-- **AI Advisor** — a rule-based expert system observes a completed run and
-  proposes a better plan (door widening, strategy switch, horizon changes);
-  each proposal is applied to a scenario copy and verified by a real test run
-  with before/after metrics. No external AI API.
-- **Restore points** — snapshot the whole workspace and roll back at any time;
-  every restore auto-backs-up the current state first.
-- **System Accuracy page** — a 14-case known-answer battery (designs that must
-  evacuate vs. designs that must fail — sealed rooms, undersized doors,
-  impossible horizons — plus physics-bound checks), run live against the real
-  engine with per-case verdicts.
-- **Reproducibility** — every run stores its building snapshot, exact config,
-  engine version, and seed; one click re-runs it.
+Every run stores its building snapshot, configuration, engine version and seed,
+so it can be repeated exactly.
 
-No AI API key, no external services: everything runs locally.
+## Setup
 
-## Quick start (Windows PowerShell)
+Requires Python 3.12+ and Node 20+.
 
-```powershell
-# 1. Backend
-cd backend
-python -m venv ..\.venv
-..\.venv\Scripts\python -m pip install -e ".[dev]"
-..\.venv\Scripts\python -m uvicorn app.main:app --port 8000
-
-# 2. Frontend (separate terminal) — for development with hot reload
-cd frontend
-npm install
-npm run dev            # http://localhost:5173 (proxies /api to :8000)
+```bash
+python -m venv .venv
+.venv/bin/pip install -e "backend[dev]"      # Windows: .venv\Scripts\pip
+cd frontend && npm install
 ```
 
-**Single-process demo (recommended):** build the frontend once
-(`npm run build` in `frontend/`), then just run uvicorn — the app is served at
-**http://127.0.0.1:8000** with SPA routing.
+Run the backend and the frontend dev server in two terminals:
 
-Linux/macOS: same commands with `python3 -m venv .venv`, `.venv/bin/...`, or
-use `scripts/dev.sh`.
-
-First startup seeds two synthetic sample buildings and five clearly-labeled
-sample scenarios (SQLite at `backend/data/evacuatesim.db`).
-
-## Try it in 60 seconds
-
-1. Open http://127.0.0.1:8000 → **Scenario Library**.
-2. Press **Run now** on *Sample: Baseline evacuation*.
-3. Watch the recorded playback; inspect T50/T90 and exit utilization.
-4. Run *Sample: West exit blocked* and *Sample: Balanced exit assignment*.
-5. **Compare** the runs side by side.
-6. **Experiments** → launch the *Strategy comparison* preset with 3 seeds and
-   export the CSV.
-
-## Tests and checks
-
-```powershell
-cd backend; ..\.venv\Scripts\python -m pytest tests/     # 111 tests
-cd backend; ..\.venv\Scripts\ruff check app tests
-cd frontend; npm test                                     # vitest
-cd frontend; npm run build                                # tsc + bundle
+```bash
+cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 8000
 ```
 
-## Project layout & documentation
+```bash
+cd frontend && npm run dev     # http://localhost:5173, proxies /api to :8000
+```
 
-- [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) — goals, phased plan
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — modules, data flow
-- [`docs/SIMULATION_MODEL.md`](docs/SIMULATION_MODEL.md) — what is modeled, honestly
-- [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) — pathfinding, strategies, assignment
-- [`docs/RESEARCH_METHODOLOGY.md`](docs/RESEARCH_METHODOLOGY.md) — experiments, analysis guidance
-- [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) — REST reference
-- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md) — test matrix incl. spec §12 mapping
-- [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) — read before interpreting results
-- [`docs/PHASE_STATUS.md`](docs/PHASE_STATUS.md) — delivery log with defect history
-- [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) — presentation walkthrough
-- [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) — common problems
+For a single process, run `npm run build` in `frontend/` and start only the
+backend. It serves the built app at http://127.0.0.1:8000.
 
-## Technology
+`scripts/dev.sh` and `scripts/dev.ps1` do the setup and start both servers.
+On first start the database (`backend/data/evacuatesim.db`) is seeded with two
+sample buildings and a few sample scenarios.
 
-Python 3.12+ · FastAPI · Pydantic v2 · SQLAlchemy 2 + SQLite · NumPy ·
-pytest · ruff — React 19 · TypeScript · Vite · Recharts.
+## Checks
 
-## Scope boundary (repeated deliberately)
+```bash
+cd backend && ../.venv/bin/python -m pytest tests/
+cd backend && ../.venv/bin/ruff check app tests
+cd frontend && npm test
+cd frontend && npm run build      # type-check and bundle
+```
 
-Grid-based educational simulation; no fire/smoke dynamics, no certified
-crowd physics, no calibrated door flow rates, no validation against real
-buildings. See docs/KNOWN_LIMITATIONS.md before drawing conclusions.
+## Docs
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Simulation model](docs/SIMULATION_MODEL.md)
+- [Algorithms](docs/ALGORITHMS.md)
+- [API reference](docs/API_SPECIFICATION.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+
+## Stack
+
+Python, FastAPI, Pydantic, SQLAlchemy with SQLite, NumPy. React, TypeScript, Vite, Recharts.

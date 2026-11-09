@@ -1,6 +1,6 @@
 // Live simulation view. While the run is pending/running it polls the real
 // backend status. When finished, it plays back the frames the engine actually
-// recorded — the animation cannot disagree with the stored result.
+// recorded - the animation cannot disagree with the stored result.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -198,7 +198,7 @@ export default function RunViewPage() {
   return (
     <div>
       <h1>
-        Run #{run.id} — {run.name}
+        Run #{run.id} - {run.name}
       </h1>
       <p className="page-sub">
         Strategy: <strong>{strategyLabel(run.strategy)}</strong> · Seed: <strong>{run.seed}</strong> ·{' '}
@@ -257,9 +257,9 @@ export default function RunViewPage() {
           <strong>Active disasters: </strong>
           {m.disasters.map((d) => `${DISASTER_LABELS[d.type] ?? d.type} @ ${Math.round(d.intensity * 100)}%`).join(', ')}
           {typeof m.incapacitated_count === 'number' && m.incapacitated_count > 0 &&
-            ` — ${m.incapacitated_count} incapacitated`}
+            ` - ${m.incapacitated_count} incapacitated`}
           {m.disasters.some((d) => typeof d.cells_blocked === 'number') &&
-            ` — ${m.disasters.reduce((sum, d) => sum + (typeof d.cells_blocked === 'number' ? d.cells_blocked : 0), 0)} cells blocked`}
+            ` - ${m.disasters.reduce((sum, d) => sum + (typeof d.cells_blocked === 'number' ? d.cells_blocked : 0), 0)} cells blocked`}
           . See the Methodology page for model rules.
         </div>
       )}
@@ -356,7 +356,7 @@ export default function RunViewPage() {
           </div>
           <div className="kbd-note">
             Occupants glide between the engine's recorded frames; door pulses mark each
-            discharge. Playback shows exactly the recorded positions — nothing invented.
+            discharge. Playback shows exactly the recorded positions - nothing invented.
           </div>
         </div>
       )}
@@ -364,17 +364,17 @@ export default function RunViewPage() {
       {run.status === 'completed' && !advisorReport && (
         <div className="card" style={{ textAlign: 'center', padding: '14px 20px' }}>
           <button onClick={analyzeRun} disabled={advisorBusy}>
-            {advisorBusy ? 'Analyzing…' : 'Ask the AI Advisor'}
+            {advisorBusy ? 'Analyzing…' : 'Ask the advisor'}
           </button>
           <span className="muted" style={{ marginLeft: 10 }}>
-            Rule-based analysis of this run — identifies issues and suggests improvements.
+            Rule-based analysis of this run - identifies issues and suggests improvements.
           </span>
         </div>
       )}
 
       {advisorReport && (
         <div className="card">
-          <h3>AI Advisor — {advisorReport.verdict}</h3>
+          <h3>Advisor - {advisorReport.verdict}</h3>
           {advisorReport.observations.map((o, i) => (
             <div key={i} className="advisor-obs">
               <div className="advisor-obs-head">
@@ -402,7 +402,7 @@ export default function RunViewPage() {
               <strong>Recommendations:</strong>
               <ul className="muted" style={{ margin: '4px 0 0 18px' }}>
                 {advisorReport.recommendations.map((r, i) => (
-                  <li key={i}>{r.title} — {r.patch_summary}</li>
+                  <li key={i}>{r.title} - {r.patch_summary}</li>
                 ))}
               </ul>
               <Link to={`/advisor?run=${run.id}`}>
@@ -490,7 +490,7 @@ export default function RunViewPage() {
               <button className="secondary">Open source scenario</button>
             </Link>
             <Link to={`/advisor?run=${run.id}`}>
-              <button className="secondary">Ask the AI Advisor</button>
+              <button className="secondary">Ask the advisor</button>
             </Link>
           </div>
           <details style={{ marginTop: 10 }}>

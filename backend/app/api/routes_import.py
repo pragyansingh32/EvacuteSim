@@ -2,7 +2,7 @@
 
 The response is a DRAFT (walls only). The frontend hands it to the building
 editor, where the user adds exits and zones and saves through the normal
-building API — so layout validation (≥ 1 exit etc.) stays enforced exactly
+building API - so layout validation (≥ 1 exit etc.) stays enforced exactly
 where it belongs.
 """
 

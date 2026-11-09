@@ -98,7 +98,7 @@ export default function DisasterReadinessPage() {
       <h1>Disaster Readiness</h1>
       <p className="page-sub">
         Tests a scenario against all 6 disaster types at 3 intensity levels (18 real simulation
-        runs) and reports a clear PASSED/FAILED verdict for each — whether the plan successfully
+        runs) and reports a clear PASSED/FAILED verdict for each - whether the plan successfully
         evacuated all reachable occupants under each condition.
       </p>
       <DisclaimerBanner />
@@ -205,7 +205,7 @@ export default function DisasterReadinessPage() {
                 </li>
               ))}
               <li>
-                Each row is a real simulation run stored with its exact configuration — click the
+                Each row is a real simulation run stored with its exact configuration - click the
                 run ID to replay the animation.
               </li>
             </ul>

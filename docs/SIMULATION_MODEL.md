@@ -17,7 +17,7 @@ behavioral panic modeling. Outcomes depend on the assumptions below.
   interpreted through this scale.
 - **Exits** are special walkable cells with a modeled throughput capacity in
   persons/second (default 1.0 p/s ≈ one person per second through a ~0.5 m
-  door — a deliberately conservative simplification, not a calibrated value).
+  door - a deliberately conservative simplification, not a calibrated value).
   An exit placed *inside* a wall line is a doorway: exit cells are walkable by
   definition.
 - **Zones** are named sets of walkable cells used as occupant starting areas.
@@ -79,7 +79,7 @@ they *stop* on any exit cell they will leave through that exit.
    same step (platoons advance naturally). Multi-pass retry realizes this.
 5. Remaining blocked requesters whose destinations are held by other blocked
    requesters form head-on cycles; each cycle is applied **simultaneously**
-   (a permutation — no cell is ever shared). This is a documented
+   (a permutation - no cell is ever shared). This is a documented
    simplification: occupants may pass each other by sidestepping at
    sub-cell resolution, which prevents permanent deadlock in single-file
    corridors. Opposing flows in narrow corridors are therefore represented
@@ -92,7 +92,7 @@ they *stop* on any exit cell they will leave through that exit.
 Congestion is **operational, not physical**: every blocked movement attempt
 increments a counter on the contested cell and adds `dt` to the occupant's
 queue time. The congestion heatmap therefore shows where occupants lost
-movement opportunities — a useful bottleneck indicator, not a density or
+movement opportunities - a useful bottleneck indicator, not a density or
 pressure measurement, and not a safety threshold.
 
 ## Exits and discharge
@@ -114,7 +114,7 @@ calibrated flow model of specific door geometries.
 The run ends when `evacuated + unreachable == total` (engine status
 `completed`) or when the configured maximum duration (or the 40,000-step
 safety cap) is reached (engine status `incomplete`, occupants remaining are
-reported honestly). Both cases are stored as *successfully executed* runs;
+reported). Both cases are stored as *successfully executed* runs;
 `failed` is reserved for execution errors.
 
 ## Reproducibility
@@ -122,14 +122,14 @@ reported honestly). Both cases are stored as *successfully executed* runs;
 One `numpy.random.Generator` seeded from the scenario seed drives all
 randomness (spawn placement, attribute sampling, conflict priorities, balanced
 assignment dealing). Given the same layout snapshot, config, seed, and engine
-version, results are identical — verified by tests comparing full result
+version, results are identical - verified by tests comparing full result
 documents. The engine version string is stored with each run.
 
 ## Disaster scenarios
 
 Three dynamic disaster processes evolve during the simulation, blocking cells
 and forcing occupants to re-route. All are abstract approximations documented
-below — not physics simulations.
+below - not physics simulations.
 
 ### Fire
 - **Ignition**: at the floor cell farthest from all exits (worst case for
@@ -137,7 +137,7 @@ below — not physics simulations.
 - **Spread**: radius(t) = (0.05 + 0.20 × intensity) cells/s, Chebyshev
   distance from the origin. Cells within the radius become impassable.
 - **Casualties**: occupants standing on newly burning cells are
-  incapacitated (counted honestly in the mass balance).
+  incapacitated (counted in the mass balance).
 - **Simplification**: smoke permeates walls (no CFD, no doors slowing smoke).
 
 ### Earthquake
@@ -171,4 +171,4 @@ below — not physics simulations.
 | Fire/smoke/route degradation during the run | Not modeled (blockages are fixed at start) |
 | Group behavior, family cohesion, herding | Not modeled |
 | Route re-planning when queues form | Only strategy B reassigns exits periodically |
-| Calibrated door flow rates | Not calibrated — user-configured assumptions |
+| Calibrated door flow rates | Not calibrated - user-configured assumptions |

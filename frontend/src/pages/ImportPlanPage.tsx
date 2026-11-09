@@ -159,7 +159,7 @@ export default function ImportPlanPage() {
     <div>
       <h1>Import Building Plan</h1>
       <p className="page-sub">
-        Upload a prepared floor plan — an image (PNG/JPG/BMP/TIFF) or an ASCII DXF CAD file —
+        Upload a prepared floor plan - an image (PNG/JPG/BMP/TIFF) or an ASCII DXF CAD file -
         and EvacuateSim converts it into a simulation automatically: walls, doors, exits (with
         width-based capacities), starting zones with suggested populations, and a ready-to-run
         scenario. The fidelity overlay lets you verify the conversion against your exact image.
@@ -184,7 +184,7 @@ export default function ImportPlanPage() {
               </button>
             </div>
             <div className="kbd-note">
-              Supported: <strong>draw.io diagrams (.drawio / .xml — most precise)</strong>,
+              Supported: <strong>draw.io diagrams (.drawio / .xml - most precise)</strong>,
               PNG/JPG/BMP/GIF/TIFF/WebP images, and plain-text (ASCII) DXF. Max 10 MB.
               Binary DXF and PDF are not supported. In draw.io, draw walls as unfilled
               rectangles and lines, leave gaps for doors, and put text labels on their own
@@ -229,12 +229,12 @@ export default function ImportPlanPage() {
                     onChange={(e) => setAutoThreshold(e.target.checked)}
                     style={{ width: "auto" }}
                   />
-                  Automatic ink threshold (Otsu — recommended; image plans only)
+                  Automatic ink threshold (Otsu - recommended; image plans only)
                 </label>
                 {!autoThreshold && (
                   <label className="field">
                     <span className="lbl">
-                      Ink threshold ({threshold}) — darker cutoff keeps only strong lines
+                      Ink threshold ({threshold}) - darker cutoff keeps only strong lines
                     </span>
                     <input
                       type="range"
@@ -247,7 +247,7 @@ export default function ImportPlanPage() {
                 )}
                 <label className="field">
                   <span className="lbl">
-                    Wall density ({Math.round(wallDensity * 100)}%) — how much ink per cell
+                    Wall density ({Math.round(wallDensity * 100)}%) - how much ink per cell
                     counts as wall; lower keeps thin lines
                   </span>
                   <input

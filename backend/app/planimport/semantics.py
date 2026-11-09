@@ -3,25 +3,25 @@
 Given the wall geometry extracted from an imported plan, this module derives
 the semantics the user would otherwise have to add by hand:
 
-1. **Morphological cleanup** — a closing pass (dilate + erode) seals single-cell
+1. **Morphological cleanup** - a closing pass (dilate + erode) seals single-cell
    pinholes (anti-aliased diagonals, scan noise) while preserving genuine
    openings of two or more cells. Small floating wall specks (text dots) are
    removed.
-2. **Opening candidates** — run-based scans along rows and columns find floor
+2. **Opening candidates** - run-based scans along rows and columns find floor
    runs flanked by wall on both ends, with a passage (open cells on both sides
    perpendicular to the run; out-of-bounds counts as outside). This
    over-approximates: room rows between wall columns also match.
-3. **Connectivity verification** — a candidate group is a REAL opening only if
+3. **Connectivity verification** - a candidate group is a REAL opening only if
    removing it actually disconnects the plan (per-group flood test) or links
    the interior to the outside. Room-interior false candidates fail this test
    because the room stays connected around them.
-4. **Classification** — an opening that links the interior to the exterior is
+4. **Classification** - an opening that links the interior to the exterior is
    an EXIT (any width); an interior opening up to MAX_DOOR_CELLS wide that
    separates two areas is a DOOR; wider interior separations are structural
    splits the rooms simply span.
-5. **Zones** — interior regions of at least MIN_ZONE_CELLS become starting
+5. **Zones** - interior regions of at least MIN_ZONE_CELLS become starting
    zones; suggested population = area × occupancy density.
-6. **Reachability** — rooms are graph-connected through doors/exits; rooms
+6. **Reachability** - rooms are graph-connected through doors/exits; rooms
    with no path to any exit are reported before simulating.
 
 Exit capacities derive from detected width: capacity ≈ width_m × 1.3 p/s/m
@@ -121,7 +121,7 @@ def _gap_candidates(
     """Run-based opening candidates along rows ('h') and columns ('v').
 
     A floor run in a line, flanked by wall on both ends (out-of-bounds counts
-    as wall — plans whose envelope sits on the grid edge still have gaps),
+    as wall - plans whose envelope sits on the grid edge still have gaps),
     with a passage perpendicular to the line (open on both sides, where
     out-of-bounds counts as outside). Generous by design; the connectivity
     test in analyze() rejects false positives.
@@ -222,7 +222,7 @@ class PlanSemantics:
     openings: int = 0
     noise_removed: int = 0
     warnings: list[str] = field(default_factory=list)
-    # The cleaned wall set (noise removed) — importers must use THESE walls
+    # The cleaned wall set (noise removed) - importers must use THESE walls
     # for the draft so zones and walls stay consistent.
     walls: set[tuple[int, int]] = field(default_factory=set)
 
@@ -237,7 +237,7 @@ def analyze(
     """Derive doors, exits, and starting zones from wall geometry."""
     result = PlanSemantics()
 
-    # NOTE: no morphological closing — flood fill and occupant movement are
+    # NOTE: no morphological closing - flood fill and occupant movement are
     # both 4-connected, so diagonal pinholes never leak; any radius-1 close
     # would seal legitimate 1-2 cell doors.
     noise_free, removed = remove_noise(walls)
@@ -426,7 +426,7 @@ def analyze(
     if stranded and exit_specs:
         result.warnings.append(
             f"{stranded} walkable cells belong to room(s) with no path to any "
-            "detected exit — connect them to the rest of the plan in the editor."
+            "detected exit - connect them to the rest of the plan in the editor."
         )
 
     result.exits = exit_specs

@@ -42,7 +42,7 @@ class DisasterSpecSchema(BaseModel):
 
     The disaster evolves DURING the simulation (fire spreads, an earthquake
     collapses structure at a set time, stampede crush zones form at
-    chokepoints). Models are abstract approximations — see the Methodology
+    chokepoints). Models are abstract approximations - see the Methodology
     page and docs/SIMULATION_MODEL.md."""
 
     model_config = ConfigDict(extra="forbid")

@@ -123,7 +123,7 @@ export default function ExperimentsPage() {
     <div>
       <h1>Experiments</h1>
       <p className="page-sub">
-        Controlled parameter sweeps over a base scenario — every combination runs the real
+        Controlled parameter sweeps over a base scenario - every combination runs the real
         simulation once per seed and stores the full results.
       </p>
       <DisclaimerBanner />
@@ -135,7 +135,7 @@ export default function ExperimentsPage() {
           <label className="field">
             <span className="lbl">Base scenario</span>
             <select value={scenarioId ?? ''} onChange={(e) => setScenarioId(Number(e.target.value))}>
-              <option value="">— select —</option>
+              <option value="">- select -</option>
               {scenarios.map((s) => (
                 <option key={s.id} value={s.id}>
                   #{s.id} {s.name}
@@ -214,7 +214,7 @@ export default function ExperimentsPage() {
         <>
           <div className="card">
             <h3>
-              Results — {results.experiment.name} <StatusBadge status={results.experiment.status} />
+              Results - {results.experiment.name} <StatusBadge status={results.experiment.status} />
             </h3>
             <table className="data">
               <thead>
@@ -268,7 +268,7 @@ export default function ExperimentsPage() {
                 </LineChart>
               </ResponsiveContainer>
               <div className="muted">
-                Multiple points per setting are different seeds — the spread indicates
+                Multiple points per setting are different seeds - the spread indicates
                 run-to-run variability, not measurement noise.
               </div>
             </div>

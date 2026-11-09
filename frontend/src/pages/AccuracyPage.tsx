@@ -51,7 +51,7 @@ export default function AccuracyPage() {
     <div>
       <h1>System Accuracy</h1>
       <p className="page-sub">
-        Fourteen building designs whose correct outcome is known in advance — adequate layouts
+        Fourteen building designs whose correct outcome is known in advance - adequate layouts
         that must evacuate, and flawed layouts (sealed rooms, undersized doors, impossible
         horizons) that must be reported as failing. Each is run through the real engine right
         now, and the system's verdict is compared with the analytical expectation.
@@ -167,7 +167,7 @@ export default function AccuracyPage() {
                 </li>
               ))}
               <li>
-                "Correct" means the engine's outcome matches the analytical expectation — for
+                "Correct" means the engine's outcome matches the analytical expectation - for
                 example a 0.25 p/s door with 120 people inside a 60 s horizon <em>must</em>{' '}
                 end with 90+ people still inside, and the system reports exactly that.
               </li>

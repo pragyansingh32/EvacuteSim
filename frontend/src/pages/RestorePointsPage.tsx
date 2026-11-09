@@ -53,7 +53,7 @@ export default function RestorePointsPage() {
       const result = await api.restoreFromPoint(id)
       const total = Object.values(result.restored).reduce((a, b) => a + b, 0)
       setInfo(
-        `Restored '${snapshotName}' — ${total} records. The previous state was auto-backed up as a new restore point.`,
+        `Restored '${snapshotName}' - ${total} records. The previous state was auto-backed up as a new restore point.`,
       )
       await refresh()
     } catch (e) {
@@ -81,7 +81,7 @@ export default function RestorePointsPage() {
     <div>
       <h1>Restore Points</h1>
       <p className="page-sub">
-        Capture the entire workspace — buildings, scenarios, run records, experiments — as a
+        Capture the entire workspace - buildings, scenarios, run records, experiments - as a
         named snapshot. Restoring replaces the current data with the snapshot; the current state
         is always auto-backed up first, so a restore is itself reversible.
       </p>
@@ -112,7 +112,7 @@ export default function RestorePointsPage() {
       <div className="card">
         <h3>Snapshots ({points.length})</h3>
         {points.length === 0 ? (
-          <div className="empty">No restore points yet — create one before making big changes.</div>
+          <div className="empty">No restore points yet - create one before making big changes.</div>
         ) : (
           <table className="data">
             <thead>

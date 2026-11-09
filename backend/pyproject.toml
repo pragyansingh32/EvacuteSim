@@ -8,6 +8,7 @@ include = ["app*"]
 [project]
 name = "evacuatesim-backend"
 version = "0.1.0"
+authors = [{ name = "EvacuateSim contributors" }]
 description = "EvacuateSim backend: discrete-time evacuation simulation, routing strategies, and REST API"
 requires-python = ">=3.12"
 dependencies = [
@@ -17,6 +18,8 @@ dependencies = [
     "pydantic-settings>=2.6",
     "sqlalchemy>=2.0",
     "numpy>=2.0",
+    "pillow>=10.0",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]

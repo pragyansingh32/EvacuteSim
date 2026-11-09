@@ -94,7 +94,7 @@ def get_building_detail(building: BuildingModel) -> dict:
         grid = BuildingGrid.from_dict(data)
         warnings = grid.validate()
     except ValidationError:
-        # Stored layout no longer validates (should not happen; be honest).
+        # Stored layout no longer validates (should not happen).
         warnings = ["Stored layout failed validation; it may be unusable for simulation."]
     return {
         "id": building.id,

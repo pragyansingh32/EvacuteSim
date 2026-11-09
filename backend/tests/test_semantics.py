@@ -69,7 +69,7 @@ class TestAutoDetection:
             ]
         )
         # The gap cells (4,6),(5,6) lead from the interior to the margin ring
-        # (floor rows 0-1 and 7-8, touching the grid edge) — the same
+        # (floor rows 0-1 and 7-8, touching the grid edge) - the same
         # geometry auto-crop produces for real uploaded plans.
         result = analyze(walls, 12, 9, cell_size_m=0.5, occupancy_density=0.25)
         assert len(result.exits) == 1, f"expected exit through margin ring, got {result.exits}"
@@ -109,7 +109,7 @@ class TestAutoDetection:
 
     def test_gap_between_wall_segments_stays_passable(self):
         # Interior wall column 6 exists only at rows 1-2; rows 3-4 are open.
-        # The system detects the 2-cell channel as a door — the two areas stay
+        # The system detects the 2-cell channel as a door - the two areas stay
         # connected for evacuation either way.
         walls = walls_from_ascii(
             [

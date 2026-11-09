@@ -1,5 +1,5 @@
-// AI Advisor: observes a completed run's recorded data and proposes a better
-// plan. Rule-based and deterministic — every observation cites evidence and
+// Advisor: observes a completed run's recorded data and proposes a better
+// plan. Rule-based and deterministic - every observation cites evidence and
 // every recommendation carries a concrete patch that is TESTED by running the
 // real simulation before/after, so a plan is only called better once the
 // engine has demonstrated it.
@@ -18,8 +18,8 @@ const SEVERITY_STYLE: Record<string, { bg: string; color: string; label: string 
 }
 
 function delta(before: number | null, after: number | null, lowerIsBetter = true): string {
-  if (before == null || after == null) return '—'
-  if (before === 0) return '—'
+  if (before == null || after == null) return '-'
+  if (before === 0) return '-'
   const pct = ((after - before) / before) * 100
   if (Math.abs(pct) < 0.5) return 'no change'
   const better = lowerIsBetter ? pct < 0 : pct > 0
@@ -81,10 +81,10 @@ export default function AdvisorPage() {
 
   return (
     <div>
-      <h1>AI Advisor</h1>
+      <h1>Advisor</h1>
       <p className="page-sub">
-        A rule-based expert system observes a completed run — exit utilization, queue times,
-        congestion clusters, mass balance — and proposes a better plan. Every recommendation is
+        A rule-based expert system observes a completed run - exit utilization, queue times,
+        congestion clusters, mass balance - and proposes a better plan. Every recommendation is
         applied to a scenario copy and <strong>tested with the real simulation</strong>, so you
         see measured before/after evidence, not promises.
       </p>
@@ -99,7 +99,7 @@ export default function AdvisorPage() {
             onChange={(e) => setRunId(Number(e.target.value))}
             style={{ maxWidth: 480 }}
           >
-            {runs.length === 0 && <option value="">— no completed runs yet —</option>}
+            {runs.length === 0 && <option value="">- no completed runs yet -</option>}
             {runs.map((r) => (
               <option key={r.id} value={r.id}>
                 #{r.id} {r.name} · {r.strategy} · seed {r.seed}
@@ -223,7 +223,7 @@ export default function AdvisorPage() {
                           </tbody>
                         </table>
                         <div className="kbd-note">
-                          Saved as scenario #{result.scenario_id} — the plan is preserved and
+                          Saved as scenario #{result.scenario_id} - the plan is preserved and
                           re-runnable.
                         </div>
                       </div>

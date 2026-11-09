@@ -59,7 +59,7 @@ export default function HomePage() {
       </div>
 
       <div className="card">
-        <h3>Quick start — how to run an evacuation</h3>
+        <h3>Quick start - how to run an evacuation</h3>
         <div className="grid-4" style={{ fontSize: 13 }}>
           <div>
             <strong>1. Create or import</strong>
@@ -71,7 +71,7 @@ export default function HomePage() {
           </div>
           <div>
             <strong>3. Run &amp; watch</strong>
-            <div className="muted">Click "Save &amp; run" — watch the animated evacuation and see the metrics.</div>
+            <div className="muted">Click "Save &amp; run" - watch the animated evacuation and see the metrics.</div>
           </div>
           <div>
             <strong>4. Analyze</strong>
@@ -159,7 +159,7 @@ export default function HomePage() {
 
       <div className="card">
         <h3>Recent simulation runs</h3>
-        {recentRuns.length === 0 && <div className="empty">No runs yet — start one from a scenario.</div>}
+        {recentRuns.length === 0 && <div className="empty">No runs yet - start one from a scenario.</div>}
         {recentRuns.length > 0 && (
           <table className="data">
             <thead>

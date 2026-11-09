@@ -246,7 +246,7 @@ class TestRunEndpoints:
         assert api_metrics["evacuated_count"] == direct.evacuated_count
         assert api_metrics["t90_s"] == direct.t90_s
 
-    def test_failed_run_recorded_honestly(self, client, building_id):
+    def test_failed_run_is_recorded(self, client, building_id):
         # Zone fully covered by blocked cells -> engine raises -> run failed.
         scenario = client.post(
             "/api/v1/scenarios",
@@ -319,7 +319,7 @@ class TestPersistenceAcrossRestart:
 
 class TestBuildingUpdate:
     def test_update_walls_and_name(self, client, building_id):
-        """Regression: PUT /buildings/{id} used to 500 (stray kwarg) — manual
+        """Regression: PUT /buildings/{id} used to 500 (stray kwarg) - manual
         editing in the editor was impossible. Editing must work end to end."""
         detail = client.get(f"/api/v1/buildings/{building_id}").json()
         walls = [list(w) for w in detail["walls"]]

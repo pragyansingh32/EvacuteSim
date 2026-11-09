@@ -1,11 +1,11 @@
-"""AI Advisor: observes a completed run and proposes a better plan.
+"""Advisor: observes a completed run and proposes a better plan.
 
-This is a **deterministic, rule-based expert system** — not a language model
+This is a **deterministic, rule-based expert system** - not a language model
 and not an external API. Every observation cites recorded evidence (exit
 utilization, queue times, congestion counts, mass balance), and every
 recommendation carries a concrete, appliable configuration patch. The
 "apply" step creates a scenario copy with the patch, runs the REAL simulation,
-and reports before/after metrics — so a proposed plan is only ever claimed
+and reports before/after metrics - so a proposed plan is only ever claimed
 better once the engine has actually demonstrated it.
 
 Analysis rules (see docs/ALGORITHMS.md):
@@ -48,7 +48,7 @@ class Recommendation:
 
 
 def _fmt(v: float | None, digits: int = 1) -> str:
-    return "—" if v is None else f"{v:.{digits}f}"
+    return "-" if v is None else f"{v:.{digits}f}"
 
 
 def build_report(metrics: dict, config: dict) -> dict:
@@ -104,7 +104,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                 SEVERITY_CRITICAL,
                 f"{unreachable} occupant(s) cannot reach any exit",
                 "These occupants are walled or blocked off from every exit. No "
-                "routing or capacity change can help them — the layout itself "
+                "routing or capacity change can help them - the layout itself "
                 "must be repaired in the editor (connect the area to a door or "
                 "remove the blocking walls).",
                 {"unreachable": unreachable},
@@ -175,7 +175,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                     f"capacity_{busiest['id']}",
                     f"Widen exit '{busiest['id']}': {cap} → {new_cap} p/s",
                     f"Mean queue time is {_fmt(queue_mean)} s (max {_fmt(queue_max)} s) "
-                    f"— occupants spend most of the evacuation standing in line at "
+                    f"- occupants spend most of the evacuation standing in line at "
                     f"'{busiest['id']}'. More door capacity converts queue time "
                     "into walking time.",
                     {"exit_capacity_overrides": {busiest["id"]: new_cap}},
@@ -215,7 +215,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                     f"{math.ceil(needed_total * 4) / 4} p/s",
                     f"{total} people cannot clear through {total_cap} p/s in "
                     f"{_fmt(config.get('max_duration_s'))} s. The scenario needs "
-                    "physically more egress (wider doors, additional exits) — "
+                    "physically more egress (wider doors, additional exits) - "
                     "or a longer acceptable evacuation time.",
                     {
                         "exit_capacity_overrides": {
@@ -248,7 +248,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                         f"Widen exit '{nearest['id']}': {cap} → {new_cap} p/s",
                         f"The worst congestion cluster ({top_count} blocked "
                         f"attempts at cell ({x}, {y})) sits within {dist} cells "
-                        f"of '{nearest['id']}' — that door is the local "
+                        f"of '{nearest['id']}' - that door is the local "
                         "bottleneck.",
                         {"exit_capacity_overrides": {nearest["id"]: new_cap}},
                         f"exit {nearest['id']}: {cap} → {new_cap} p/s",
@@ -261,7 +261,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                         SEVERITY_INFO,
                         "Congestion cluster away from any door",
                         f"The worst cluster ({top_count} blocked attempts at "
-                        f"({x}, {y})) is not near an exit — likely a narrow "
+                        f"({x}, {y})) is not near an exit - likely a narrow "
                         "corridor or junction. Consider widening that passage "
                         "in the editor.",
                         {"cell": top_cell, "blocked_attempts": top_count},
@@ -289,7 +289,7 @@ def build_report(metrics: dict, config: dict) -> dict:
                 f"Tighten pre-movement delay: max {pre_max} → {max(5.0, pre_max * 0.5)} s",
                 "Occupants spend a large share of the evacuation simply reacting. "
                 "Half the maximum delay models better drill readiness or "
-                "notification systems — a behavior assumption, not a building "
+                "notification systems - a behavior assumption, not a building "
                 "change, so treat the effect as a sensitivity result.",
                 {"pre_movement_distribution": {**pre, "max": max(5.0, pre_max * 0.5)}},
                 f"pre-movement max → {max(5.0, pre_max * 0.5)} s",
@@ -321,10 +321,10 @@ def _finalize(observations: list[Observation], recommendations: list[Recommendat
             worst = sev
             break
     verdict = {
-        SEVERITY_OK: "Efficient evacuation — no design change indicated.",
+        SEVERITY_OK: "Efficient evacuation - no design change indicated.",
         SEVERITY_INFO: "Evacuation works; some characteristics worth reviewing.",
-        SEVERITY_WARN: "Measurable inefficiencies found — recommendations below.",
-        SEVERITY_CRITICAL: "Serious problems found — occupants could not evacuate.",
+        SEVERITY_WARN: "Measurable inefficiencies found - recommendations below.",
+        SEVERITY_CRITICAL: "Serious problems found - occupants could not evacuate.",
     }[worst]
     return {
         "verdict": verdict,
@@ -350,7 +350,7 @@ def _finalize(observations: list[Observation], recommendations: list[Recommendat
             for r in recommendations
         ],
         "disclaimer": (
-            "Rule-based analysis of the recorded run — deterministic and "
+            "Rule-based analysis of the recorded run - deterministic and "
             "explainable, no language model. Recommendations are model-level "
             "suggestions; each must be validated by a test run before you rely "
             "on it, and none of this is certified safety guidance."

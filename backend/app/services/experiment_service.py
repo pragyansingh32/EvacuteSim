@@ -4,7 +4,7 @@ An experiment is a cartesian product of sweep values applied to dot-paths of
 the scenario config, repeated once per configured seed. Every combination
 produces a real simulation run stored in `runs`, linked from `experiment_runs`
 with its sweep values and headline metrics. Individual run failures are
-recorded honestly; they do not abort the whole experiment.
+recorded; they do not abort the whole experiment.
 """
 
 import copy

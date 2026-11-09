@@ -70,7 +70,7 @@ class BuildingGrid:
     def walkable_cells(self) -> set[tuple[int, int]]:
         """All cells occupants may stand on: floor plus exit cells.
 
-        Exit cells are walkable by definition — an exit placed in a wall line
+        Exit cells are walkable by definition - an exit placed in a wall line
         is a doorway. Without this, doors on the building envelope would be
         unreachable and no evacuation could start.
         """

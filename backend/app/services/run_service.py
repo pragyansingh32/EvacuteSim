@@ -4,7 +4,7 @@ Execution model: POST /runs persists a `pending` run, then either executes it
 synchronously (small runs, tests) or submits it to a small thread pool. The
 engine runs *outside* any open transaction; only the final result write happens
 in a short transaction. A failed engine execution records status=failed with
-the error message — it can never fabricate a successful result.
+the error message - it can never fabricate a successful result.
 """
 
 import logging
@@ -168,7 +168,7 @@ def execute_run(run_id: int) -> None:
         engine_cfg = build_engine_config(config)
         result = EvacuationEngine(grid, engine_cfg).run()
         result_dict = result.to_dict()
-    except Exception as exc:  # noqa: BLE001 - record honestly, re-raise nothing
+    except Exception as exc:  # noqa: BLE001 - record the failure and re-raise nothing
         logger.exception("Run %s failed", run_id)
         with session_scope() as db:
             failed = run_repo.get_run(db, run_id)

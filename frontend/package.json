@@ -2,6 +2,7 @@
   "name": "evacuatesim-frontend",
   "private": true,
   "version": "0.1.0",
+  "author": "EvacuateSim contributors",
   "type": "module",
   "scripts": {
     "dev": "vite",

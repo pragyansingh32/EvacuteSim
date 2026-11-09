@@ -9,7 +9,7 @@ class RunOverrides(BaseModel):
     """Optional per-run adjustments on top of the scenario configuration.
 
     Overrides let the same saved scenario be re-run with a different seed or
-    strategy without editing it — the mechanism the comparison views use.
+    strategy without editing it - the mechanism the comparison views use.
     """
 
     model_config = ConfigDict(extra="forbid")

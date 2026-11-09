@@ -1,6 +1,6 @@
 # API Specification
 
-Base URL: `http://127.0.0.1:8000/api/v1` — versioned prefix `/api/v1`.
+Base URL: `http://127.0.0.1:8000/api/v1` - versioned prefix `/api/v1`.
 Interactive docs: `http://127.0.0.1:8000/docs` (OpenAPI 3, generated from code).
 
 All errors use one envelope:
@@ -12,9 +12,9 @@ All errors use one envelope:
 `422 request_validation_error` adds `details[]` with field locations. Internal
 failures return opaque `500 internal_error` (details only in server logs).
 
-## AI Advisor
+## Advisor
 
-Rule-based expert system over recorded run data — deterministic, explainable,
+Rule-based expert system over recorded run data - deterministic, explainable,
 no external AI API.
 
 | Method | Path | Description |
@@ -47,7 +47,7 @@ Layout document shape: `{name, width, height, cell_size_m, walls: [[x,y]…],
 exits: [{id, x, y, capacity_pps}…], zones: [{id, name, cells: [[x,y]…]}…]}`.
 Grids must be ≥ 4×4 and ≤ 120×120; ≥ 1 exit; zone cells on floor; duplicate
 ids rejected. Responses include validation `warnings` (e.g. unreachable
-pockets) — warnings do not block saving.
+pockets) - warnings do not block saving.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -98,7 +98,7 @@ Stored configs use the engine key names `speed_distribution` /
 
 | Method | Path | Description |
 | --- | --- | --- |
-| POST | `/import/preview` | Multipart upload of a floor plan (image or ASCII DXF) + form fields `name`, `target_width` (8–120 cells), `real_width_m`, `threshold` (0–255, image only; **omit for automatic Otsu detection**), `wall_density` (image only, fraction of cell pixels that must be ink, default 0.3), `invert` (image only), `interpret` (default true), `occupancy_density` (persons/m², default 0.25). Wall extraction is followed by automatic interpretation: door detection (gaps in wall lines verified by a connectivity test), exit placement (openings to the outside, capacity ≈ width × 1.3 p/s/m), room segmentation into starting zones (flood fill), and suggested populations (area × density). Returns `{draft: {...}, stats, suggested_scenario, warnings}` where `stats` includes `threshold` (the value actually applied), `threshold_auto`, `crop_box` (source-pixel region the grid maps onto — used by the UI's fidelity overlay), and `ink_captured_pct` (fraction of the plan's ink inside detected wall cells: the conversion's fidelity metric; below ~60% the UI advises re-tuning). The suggested scenario is complete and runnable; the editor remains available for cleanup. 422 on unsupported types, oversized files (>10 MB), unreadable images, or geometry with no detected walls. |
+| POST | `/import/preview` | Multipart upload of a floor plan (image or ASCII DXF) + form fields `name`, `target_width` (8–120 cells), `real_width_m`, `threshold` (0–255, image only; **omit for automatic Otsu detection**), `wall_density` (image only, fraction of cell pixels that must be ink, default 0.3), `invert` (image only), `interpret` (default true), `occupancy_density` (persons/m², default 0.25). Wall extraction is followed by automatic interpretation: door detection (gaps in wall lines verified by a connectivity test), exit placement (openings to the outside, capacity ≈ width × 1.3 p/s/m), room segmentation into starting zones (flood fill), and suggested populations (area × density). Returns `{draft: {...}, stats, suggested_scenario, warnings}` where `stats` includes `threshold` (the value actually applied), `threshold_auto`, `crop_box` (source-pixel region the grid maps onto - used by the UI's fidelity overlay), and `ink_captured_pct` (fraction of the plan's ink inside detected wall cells: the conversion's fidelity metric; below ~60% the UI advises re-tuning). The suggested scenario is complete and runnable; the editor remains available for cleanup. 422 on unsupported types, oversized files (>10 MB), unreadable images, or geometry with no detected walls. |
 
 ## Runs
 
@@ -113,7 +113,7 @@ Stored configs use the engine key names `speed_distribution` /
 Run status: `pending → running → completed | failed`.
 `metrics.engine_status` distinguishes `completed` (all out) from `incomplete`
 (horizon reached). Failed runs carry `error {code, message}` and
-`metrics: null` — a failure can never look like a successful evacuation.
+`metrics: null` - a failure can never look like a successful evacuation.
 
 Metrics document (summary): engine_status, sim_time_s, steps,
 total/evacuated/unreachable/remaining counts, t50/t90/t95, mean/max/min

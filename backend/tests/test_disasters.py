@@ -1,6 +1,6 @@
 """Disaster scenario tests: fire, earthquake, stampede.
 
-Each disaster must evolve during the run, be honestly counted (incapacitated
+Each disaster must evolve during the run, be counted (incapacitated
 occupants are casualties, never dropped), and stay deterministic. The exact
 model rules are documented in docs/SIMULATION_MODEL.md and the Methodology
 page; here we verify the engine applies them.
@@ -62,7 +62,7 @@ def mass_ok(result) -> bool:
 class TestFire:
     def test_fire_blocks_cells_and_incapsulates(self):
         """With fire, the plan must end WORSE than the no-disaster baseline:
-        fewer evacuated and/or casualties — the disaster bites. The long
+        fewer evacuated and/or casualties - the disaster bites. The long
         pre-movement delay keeps occupants inside while the fire spreads."""
         grid = office_grid()
         baseline = EvacuationEngine(
@@ -143,8 +143,8 @@ class TestEarthquake:
         assert result.disasters[0]["type"] == "earthquake"
 
     def test_collapse_can_seal_the_exit(self):
-        """Catastrophic intensity blocks cells nearest exits first — with a
-        small plan the single exit can be lost and nobody escapes. Honest
+        """Catastrophic intensity blocks cells nearest exits first - with a
+        small plan the single exit can be lost and nobody escapes. Expected
         failure, not a simulation bug."""
         grid = office_grid()
         result = EvacuationEngine(
@@ -154,7 +154,7 @@ class TestEarthquake:
         assert mass_ok(result)
         assert result.disasters[0]["cells_blocked"] >= 1
         # Either the exit survived and some escaped, or it was destroyed and
-        # the plan fails — both are valid, honestly reported outcomes.
+        # the plan fails - both are valid, reported outcomes.
         assert result.status in ("completed", "incomplete")
 
     def test_waiting_occupants_get_confusion_delay(self):

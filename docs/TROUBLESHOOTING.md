@@ -1,61 +1,36 @@
 # Troubleshooting
 
-## Installation
+**Port 8000 is in use.** Start uvicorn on another port and update the proxy
+target in `frontend/vite.config.ts` for dev mode.
 
-**`ImportError: DLL load failed while importing _pydantic_core: An Application Control policy has blocked this file.`**
-Windows Smart App Control blocked the wheel by cloud reputation. Pin the known-good version:
-`pip install "pydantic==2.12.5"`. Do not disable the policy. (See KNOWN_LIMITATIONS §15.)
+**The frontend shows a network error or no data.** The backend is not
+reachable. Check http://127.0.0.1:8000/api/v1/health.
 
-**`pip install` fails on Python 3.8/3.9** — the project targets Python ≥ 3.12 (tested on 3.14).
-Install a newer interpreter and recreate the venv.
+**No buildings or scenarios appear.** Samples are seeded at startup. If
+`backend/data/evacuatesim.db` is broken, stop the server and delete it. It is
+recreated on the next start, and everything stored in it is lost.
 
-**`npm install` is slow or fails** — delete `frontend/node_modules` and retry; ensure Node ≥ 20.
+**"database is locked".** Don't run two backends against the same database file.
 
-## Running
+**"Time step X s is too large for a 0.5 m cell and Y m/s maximum speed".** The
+step must satisfy `dt <= cell_size / max_speed`. Lower `dt_s` or the maximum speed.
 
-**Port 8000 already in use** — stop the other process or run
-`uvicorn app.main:app --port 8001`; if you change the port, also set the Vite proxy target in
-`frontend/vite.config.ts` (dev mode).
+**"Zone has no walkable cells in this scenario".** Blocked cells or blocked
+exits cover the whole zone.
 
-**Frontend loads but shows "Network error"/empty data** — the backend is not reachable. In dev
-mode the Vite proxy targets `http://127.0.0.1:8000`; make sure uvicorn is running. Check
-`http://127.0.0.1:8000/api/v1/health`.
+**"All exits are blocked".** At least one reachable exit must remain open.
 
-**No buildings/scenarios appear** — sample seeding runs at backend startup. If the DB file
-(`backend/data/evacuatesim.db`) exists but is empty or broken, stop the server and delete the
-file; it will be recreated on next start (all user data in it is lost — export runs first).
+**A run has status `failed`.** The run detail shows the error. Fix the
+configuration and start a new run.
 
-**SQLite "database is locked"** — the 2-worker run pool + API writes rarely conflict (WAL mode);
-if you see it, avoid running two backends against the same DB file.
+**Occupants remain after the run ends.** The time limit was reached. Raise
+`max_duration_s`, or treat it as a result.
 
-## Simulation
+**Every occupant is `unreachable`.** No exit is connected to the zones. The
+editor's validation warnings point at the break.
 
-**"Time step X s is too large for a 0.5 m cell and Y m/s maximum speed"** — the step must resolve
-the fastest walker: `dt ≤ cell_size / max_speed`. Lower `dt_s` (default 0.25) or reduce max speed.
-
-**"Zone 'Z' has no walkable cells in this scenario"** — the scenario's blocked cells or a blocked
-exit cover the whole zone. Unblock something.
-
-**"All exits are blocked" / "Cannot block every exit"** — at least one reachable exit must remain.
-
-**Run status `failed`** — open the run detail: the error message states the cause (e.g. a broken
-layout). Failed runs are recorded honestly and never fabricate results; fix the configuration
-and start a new run.
-
-**Run status shows `incomplete` engine outcome with occupants remaining** — the time horizon was
-reached before everyone got out. Increase `max_duration_s`, or treat it as a finding (that many
-people would still be inside).
-
-**All occupants `unreachable`** — no exit is path-connected to the zones. Use the editor's
-validation warnings (unreachable cells, isolated exits) to locate the break.
-
-## Frontend
-
-**Blank page after `npm run build`** — hard-refresh (Ctrl+F5); the SPA fallback serves
+**Blank page after `npm run build`.** Hard-refresh. The backend serves
 `index.html` for client-side routes.
 
-**Playback frame count seems low** — frames are recorded at `frame_interval_s` (default 1 s) and
-capped at 4000 per run; the engine raises the interval automatically for very long runs.
-
-**Charts show no data for a run** — only completed runs carry timeline/frames; failed or pending
-runs intentionally show status only.
+**Playback has few frames.** Frames are recorded every `frame_interval_s`
+(default 1 s) and capped at 4000 per run.
